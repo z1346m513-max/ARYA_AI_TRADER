@@ -1,0 +1,41 @@
+# وزن هر بخش تحلیل در امتیاز نهایی (مجموع باید نرمال‌سازی شود؛ لازم نیست دقیقا ۱ باشد)
+# پروفایل‌های آماده هم در پایین تعریف شده‌اند.
+
+active_profile: "balanced"
+
+sections:
+  technical: 0.35
+  fundamental: 0.20
+  news: 0.10
+  codal: 0.10
+  smart_money: 0.15
+  liquidity: 0.05
+  risk: 0.05
+
+profiles:
+  low_risk:
+    technical: 0.25
+    fundamental: 0.30
+    news: 0.05
+    codal: 0.15
+    smart_money: 0.05
+    liquidity: 0.05
+    risk: 0.15
+
+  balanced:
+    technical: 0.35
+    fundamental: 0.20
+    news: 0.10
+    codal: 0.10
+    smart_money: 0.15
+    liquidity: 0.05
+    risk: 0.05
+
+  high_risk:
+    technical: 0.45
+    fundamental: 0.05
+    news: 0.15
+    codal: 0.05
+    smart_money: 0.25
+    liquidity: 0.05
+    risk: 0.00

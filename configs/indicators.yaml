@@ -1,0 +1,81 @@
+# هر اندیکاتور به‌صورت کامل قابل شخصی‌سازی است:
+# enabled | params | weight (0..1 در گروه خودش) | color | timeframe | alerts
+
+trend:
+  sma:
+    enabled: true
+    params: { period: 20 }
+    weight: 0.5
+    color: "#2E86DE"
+    timeframe: "1d"
+    alerts: { cross_price: true }
+
+  ema:
+    enabled: true
+    params: { period: 50 }
+    weight: 0.5
+    color: "#F39C12"
+    timeframe: "1d"
+    alerts: { cross_price: true }
+
+momentum:
+  rsi:
+    enabled: true
+    params: { period: 14, overbought: 70, oversold: 30 }
+    weight: 0.6
+    color: "#8E44AD"
+    timeframe: "1d"
+    alerts: { overbought: true, oversold: true }
+
+  macd:
+    enabled: true
+    params: { fast: 12, slow: 26, signal: 9 }
+    weight: 0.4
+    color: "#16A085"
+    timeframe: "1d"
+    alerts: { signal_cross: true }
+
+volatility:
+  bollinger:
+    enabled: true
+    params: { period: 20, std_dev: 2 }
+    weight: 1.0
+    color: "#C0392B"
+    timeframe: "1d"
+    alerts: { band_breakout: true }
+
+volume:
+  obv:
+    enabled: true
+    params: {}
+    weight: 1.0
+    color: "#34495E"
+    timeframe: "1d"
+    alerts: { divergence: true }
+
+market_structure:
+  swing_points:
+    enabled: false
+    params: { lookback: 5 }
+    weight: 1.0
+    color: "#7F8C8D"
+    timeframe: "1d"
+    alerts: {}
+
+smart_money:
+  order_blocks:
+    enabled: false
+    params: { lookback: 50 }
+    weight: 1.0
+    color: "#D35400"
+    timeframe: "4h"
+    alerts: { new_block: true }
+
+statistics:
+  zscore:
+    enabled: false
+    params: { period: 20 }
+    weight: 1.0
+    color: "#2C3E50"
+    timeframe: "1d"
+    alerts: {}

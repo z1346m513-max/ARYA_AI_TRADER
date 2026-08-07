@@ -1,0 +1,27 @@
+app:
+  name: "ARYA AI Trader"
+  version: "0.1.0-milestone1"
+  environment: "development"   # development | staging | production
+  language: "fa"                # fa | en
+  timezone: "Asia/Tehran"
+
+logging:
+  level: "INFO"                 # DEBUG | INFO | WARNING | ERROR
+  path: "data/logs/arya.log"
+  max_size_mb: 10
+  backup_count: 5
+
+storage:
+  driver: "sqlite"               # sqlite | postgres (future)
+  path: "data/database/arya.db"
+  cache_path: "data/cache/"
+
+markets:
+  enabled:
+    - stock       # بورس ایران
+    - crypto
+    - forex
+
+paths:
+  reports: "data/reports/"
+  exports: "data/exports/"

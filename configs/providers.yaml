@@ -1,0 +1,34 @@
+# تعریف Providerهای داده. در Milestone 1 فقط mock فعال است.
+# اتصال به Providerهای واقعی (TSETMC, Codal, Binance, ...) در فازهای بعدی اضافه می‌شود.
+
+market:
+  stock:
+    driver: "mock"        # mock | tsetmc | ...
+    enabled: true
+    rate_limit_per_min: 60
+
+  crypto:
+    driver: "mock"        # mock | binance | ...
+    enabled: true
+    rate_limit_per_min: 1200
+
+  forex:
+    driver: "mock"        # mock | oanda | ...
+    enabled: false
+    rate_limit_per_min: 60
+
+codal:
+  driver: "mock"
+  enabled: false
+
+news:
+  driver: "mock"
+  enabled: false
+
+macro:
+  driver: "mock"
+  enabled: false
+
+sentiment:
+  driver: "mock"
+  enabled: false

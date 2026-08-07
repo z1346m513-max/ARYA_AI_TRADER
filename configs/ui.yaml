@@ -1,0 +1,20 @@
+theme:
+  mode: "dark"          # dark | light
+  accent_color: "#2E86DE"
+  font_family: "Vazirmatn"
+  font_size: 11
+  rtl: true
+
+layout:
+  default_view: "dashboard"   # dashboard | watchlist | portfolio
+  chart_engine: "pyqtgraph"   # pyqtgraph | lightweight-charts (future)
+
+windows:
+  main:
+    width: 1400
+    height: 900
+    remember_geometry: true
+
+localization:
+  default_language: "fa"
+  available: ["fa", "en"]
