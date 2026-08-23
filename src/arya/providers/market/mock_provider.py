@@ -4,6 +4,7 @@ Provider آزمایشی (Mock) که داده‌ی OHLCV مصنوعی ولی وا
 تمام توسعه و تست پایپ‌لاین با همین Provider انجام می‌شود؛ به همین دلیل رفتار آن
 Deterministic (بر اساس seed) است تا تست‌ها Reproducible بمانند.
 """
+
 from __future__ import annotations
 
 import math
@@ -13,6 +14,7 @@ import numpy as np
 
 from arya.models.market_data import Candle, OHLCVSeries, Symbol
 from arya.providers.base import MarketDataProvider, ProviderRegistry
+
 
 _SAMPLE_SYMBOLS = {
     "stock": [("FOOLAD", "فولاد مبارکه"), ("SHASTA", "پتروشیمی شازند")],
