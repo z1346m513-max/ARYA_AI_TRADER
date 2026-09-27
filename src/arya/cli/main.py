@@ -24,6 +24,12 @@ def build_parser() -> argparse.ArgumentParser:
     analyze_p.add_argument("--ticker", required=True, help="نماد، مثلا FOOLAD یا BTCUSDT")
     analyze_p.add_argument("--market", default="stock", choices=["stock", "crypto", "forex"])
     analyze_p.add_argument("--timeframe", default="1d")
+    analyze_p.add_argument(
+        "--profile",
+        default=None,
+        choices=["balanced", "conservative", "momentum", "trend_following"],
+        help="پروفایل پارامترهای تحلیل",
+    )
 
     list_p = sub.add_parser("list-symbols", help="لیست نمادهای موجود در یک بازار")
     list_p.add_argument("--market", default="stock", choices=["stock", "crypto", "forex"])
@@ -57,7 +63,13 @@ def main(argv: list[str] | None = None) -> int:
     language = app.settings.app.get("app", {}).get("language", "fa")
 
     if args.command == "analyze":
-        rec = app.analyze_symbol(args.ticker, market=args.market, timeframe=args.timeframe)
+        analysis_settings = app.settings.for_analysis(profile_name=args.profile)
+        rec = app.analyze_symbol(
+            args.ticker,
+            market=args.market,
+            timeframe=args.timeframe,
+            analysis_settings=analysis_settings,
+        )
         render_recommendation(rec, console, language=language)
 
     elif args.command == "list-symbols":
