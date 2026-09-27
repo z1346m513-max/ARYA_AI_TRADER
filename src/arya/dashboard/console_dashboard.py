@@ -27,21 +27,25 @@ def render_recommendation(
 ) -> None:
     console = console or Console()
 
-    action_fa = translate_action(rec.action, language)
-    market, _, = rec.symbol.partition("@")
+    action_label = translate_action(rec.action, language)
+    symbol_label, separator, market_code = rec.symbol.partition("@")
     market_label = ""
-    if _:
-        market_label = f" | بازار: {translate_market(_, language)}"
+    if separator:
+        market_label = (
+            f" | بازار: {translate_market(market_code, language)}"
+            if language != "en"
+            else f" | market: {translate_market(market_code, language)}"
+        )
 
     header = (
-        f"{action_fa}  —  امتیاز کلی: {float(rec.overall_score):+.2f}  "
+        f"{action_label}  —  امتیاز کلی: {float(rec.overall_score):+.2f}  "
         f"| اطمینان: {rec.confidence:.0%}  | کیفیت روند: {rec.trend_quality:.0%}  "
         f"| نقدشوندگی: {float(rec.liquidity_strength):.0%}"
     )
     console.print(
         Panel(
             header,
-            title=f"{market}{market_label}",
+            title=f"{symbol_label}{market_label}",
             expand=False,
         )
     )
