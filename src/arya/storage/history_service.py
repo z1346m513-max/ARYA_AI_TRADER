@@ -214,6 +214,7 @@ class MarketHistoryService:
         *,
         market: str = "stock",
         limit: int = 200,
+        adjust: bool = False,
         now: datetime | None = None,
     ) -> list[HistoryResult]:
         """Refresh cache entries due now; intended for the scheduler."""
@@ -233,6 +234,7 @@ class MarketHistoryService:
                     record.series.symbol,
                     timeframe=record.series.timeframe,
                     limit=limit,
+                    adjust=adjust,
                     now=current,
                 )
             )
