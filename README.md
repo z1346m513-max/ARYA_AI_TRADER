@@ -75,3 +75,25 @@ pytest tests/ -v
 ## لایسنس
 
 به فایل [`LICENSE`](LICENSE) مراجعه کنید (قابل تغییر بر اساس نیاز کسب‌وکار).
+
+## رابط گرافیکی فارسی
+
+پایه‌ی رابط دسکتاپ PySide6 با RTL فارسی، ورودی Unicode، نرمال‌سازی نمادهای فارسی/عربی و اجرای غیرهمزمان تحلیل اضافه شده است.
+
+پس از نصب GUI:
+
+```bash
+uv pip install --python .venv\Scripts\python.exe -e ".[gui]"
+```
+
+اجرا:
+
+```bash
+python -m arya.ui
+# یا
+arya gui
+# یا
+arya-gui
+```
+
+جزئیات در docs/ui/persian-rtl.md آمده است.
