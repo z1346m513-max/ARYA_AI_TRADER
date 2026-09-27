@@ -28,3 +28,33 @@ def test_runtime_overrides_are_isolated_from_base_settings():
     assert tuned.analysis["runtime"]["decision"]["buy_threshold"] == 0.50
     assert settings.indicators["trend"]["sma"]["params"]["period"] == 20
     assert settings.indicators["trend"]["sma"]["enabled"] is True
+
+
+def test_analysis_validation_rejects_incompatible_parameters():
+    import pytest
+    from arya.config.settings import ConfigError
+
+    settings = Settings.load()
+
+    with pytest.raises(ConfigError):
+        settings.for_analysis(
+            indicator_overrides={
+                "momentum": {
+                    "macd": {"params": {"fast": 30, "slow": 10, "signal": 9}}
+                }
+            }
+        )
+
+    with pytest.raises(ConfigError):
+        settings.for_analysis(
+            indicator_overrides={
+                "momentum": {
+                    "rsi": {"params": {"period": 14, "overbought": 30, "oversold": 70}}
+                }
+            }
+        )
+
+    with pytest.raises(ConfigError):
+        settings.for_analysis(history_limit=10, indicator_overrides={
+            "trend": {"sma": {"params": {"period": 50}}}
+        })
