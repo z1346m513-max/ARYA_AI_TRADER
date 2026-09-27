@@ -188,3 +188,44 @@ def test_small_limit_reuses_larger_fresh_cache(tmp_path):
     assert len(result.series.candles) == 2
     assert provider.calls == 1
     cache.close()
+
+def test_refresh_cached_keys_skips_fresh_entries(tmp_path):
+    settings = _settings(tmp_path)
+    cache = SQLiteHistoryCache(settings.app["storage"]["path"])
+    provider = FakeProvider(result=_series())
+    service = MarketHistoryService(settings, cache, provider)
+    now = datetime(2026, 9, 27, 6, 0, tzinfo=timezone.utc)
+
+    service.get_or_refresh(Symbol("فملی", "stock"), now=now)
+    results = service.refresh_cached_keys(
+        market="stock",
+        limit=3,
+        now=now + timedelta(seconds=30),
+    )
+
+    assert results == []
+    assert provider.calls == 1
+    cache.close()
+
+
+def test_refresh_cached_keys_refreshes_stale_entries(tmp_path):
+    settings = _settings(tmp_path)
+    cache = SQLiteHistoryCache(settings.app["storage"]["path"])
+    initial = FakeProvider(result=_series())
+    service = MarketHistoryService(settings, cache, initial)
+    now = datetime(2026, 9, 27, 6, 0, tzinfo=timezone.utc)
+
+    service.get_or_refresh(Symbol("فملی", "stock"), now=now)
+
+    refreshed = FakeProvider(result=_series())
+    service2 = MarketHistoryService(settings, cache, refreshed)
+    results = service2.refresh_cached_keys(
+        market="stock",
+        limit=3,
+        now=now + timedelta(hours=8),
+    )
+
+    assert len(results) == 1
+    assert results[0].refreshed is True
+    assert refreshed.calls == 1
+    cache.close()
