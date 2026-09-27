@@ -1,0 +1,83 @@
+# پروفایل‌های تحلیل ARYA
+# مقادیر موجود در indicators.yaml تنظیمات پایه هستند.
+# هر profile فقط overrideهای موردنیاز را تعریف می‌کند.
+
+active_profile: "balanced"
+
+profiles:
+  balanced:
+    history_limit: 200
+    decision:
+      buy_threshold: 0.25
+      sell_threshold: -0.25
+    risk:
+      volatility_window: 14
+      high_volatility_pct: 5.0
+      medium_volatility_pct: 2.5
+      high_trend_threshold: 0.30
+      medium_trend_threshold: 0.60
+      high_max_position_pct: 5.0
+      medium_max_position_pct: 10.0
+      low_max_position_pct: 20.0
+      high_stop_loss_multiplier: 1.5
+      medium_stop_loss_multiplier: 1.2
+      low_stop_loss_multiplier: 1.0
+
+  conservative:
+    history_limit: 200
+    decision:
+      buy_threshold: 0.35
+      sell_threshold: -0.35
+    risk:
+      volatility_window: 20
+      high_volatility_pct: 4.0
+      medium_volatility_pct: 2.0
+      high_trend_threshold: 0.40
+      medium_trend_threshold: 0.70
+      high_max_position_pct: 3.0
+      medium_max_position_pct: 7.0
+      low_max_position_pct: 15.0
+      high_stop_loss_multiplier: 1.8
+      medium_stop_loss_multiplier: 1.3
+      low_stop_loss_multiplier: 1.0
+
+  momentum:
+    history_limit: 250
+    indicators:
+      momentum:
+        rsi:
+          params:
+            period: 9
+            overbought: 72
+            oversold: 28
+        macd:
+          params:
+            fast: 8
+            slow: 21
+            signal: 5
+    decision:
+      buy_threshold: 0.20
+      sell_threshold: -0.20
+    risk:
+      volatility_window: 14
+      high_volatility_pct: 6.0
+      medium_volatility_pct: 3.0
+
+  trend_following:
+    history_limit: 250
+    indicators:
+      trend:
+        sma:
+          params:
+            period: 50
+        ema:
+          params:
+            period: 100
+      volatility:
+        bollinger:
+          params:
+            period: 30
+            std_dev: 2.2
+    decision:
+      buy_threshold: 0.30
+      sell_threshold: -0.30
