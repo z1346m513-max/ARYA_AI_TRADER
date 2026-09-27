@@ -230,3 +230,38 @@ def test_refresh_cached_keys_refreshes_stale_entries(tmp_path):
     assert results[0].refreshed is True
     assert refreshed.calls == 1
     cache.close()
+
+
+def test_cache_migrates_legacy_schema(tmp_path):
+    import sqlite3
+
+    db_path = tmp_path / "legacy.db"
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        """
+        CREATE TABLE ohlcv_history_cache (
+            cache_key TEXT PRIMARY KEY,
+            symbol TEXT NOT NULL,
+            market TEXT NOT NULL,
+            timeframe TEXT NOT NULL,
+            adjusted INTEGER NOT NULL DEFAULT 0,
+            payload TEXT NOT NULL,
+            fetched_at TEXT NOT NULL,
+            last_candle_at TEXT,
+            last_error TEXT
+        )
+        """
+    )
+    conn.commit()
+    conn.close()
+
+    cache = SQLiteHistoryCache(db_path)
+    columns = {
+        row[1]
+        for row in cache._conn.execute(
+            "PRAGMA table_info(ohlcv_history_cache)"
+        ).fetchall()
+    }
+    assert "provider" in columns
+    assert cache.keys() == []
+    cache.close()
