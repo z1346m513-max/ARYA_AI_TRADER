@@ -40,10 +40,11 @@ def main(argv: list[str] | None = None) -> int:
     console = Console()
 
     app = AryaApp()
+    language = app.settings.app.get("app", {}).get("language", "fa")
 
     if args.command == "analyze":
         rec = app.analyze_symbol(args.ticker, market=args.market, timeframe=args.timeframe)
-        render_recommendation(rec, console)
+        render_recommendation(rec, console, language=language)
 
     elif args.command == "list-symbols":
         symbols = app.list_symbols(market=args.market)
@@ -54,7 +55,7 @@ def main(argv: list[str] | None = None) -> int:
         symbols = app.list_symbols(market=args.market)
         for s in symbols:
             rec = app.analyze_symbol(s.ticker, market=args.market)
-            render_recommendation(rec, console)
+            render_recommendation(rec, console, language=language)
 
     return 0
 
