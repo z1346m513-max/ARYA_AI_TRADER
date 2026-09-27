@@ -75,3 +75,37 @@ pytest tests/ -v
 ## لایسنس
 
 به فایل [`LICENSE`](LICENSE) مراجعه کنید (قابل تغییر بر اساس نیاز کسب‌وکار).
+
+## رابط گرافیکی فارسی
+
+پایه‌ی رابط دسکتاپ PySide6 با RTL فارسی، ورودی Unicode، نرمال‌سازی نمادهای فارسی/عربی و اجرای غیرهمزمان تحلیل اضافه شده است.
+
+پس از نصب GUI:
+
+```bash
+uv pip install --python .venv\Scripts\python.exe -e ".[gui]"
+```
+
+اجرا:
+
+```bash
+python -m arya.ui
+# یا
+arya gui
+# یا
+arya-gui
+```
+
+جزئیات در docs/ui/persian-rtl.md آمده است.
+
+## تنظیمات تحلیل و پروفایل‌ها
+
+پارامترهای تحلیل به‌صورت profile و runtime override قابل تغییر هستند. فایل `configs/analysis.yaml` پروفایل‌های آماده را نگهداری می‌کند و GUI نیز همین قرارداد را مصرف می‌کند.
+
+نمونه:
+
+```text
+arya analyze --ticker "فملی" --market stock --timeframe 1d --profile momentum
+```
+
+در GUI می‌توان دوره‌ها، حدود RSI، پارامترهای MACD و Bollinger، فعال/غیرفعال بودن اندیکاتورها، وزن‌ها، history limit، آستانه‌های تصمیم و پارامترهای اصلی ریسک را برای همان تحلیل تغییر داد.

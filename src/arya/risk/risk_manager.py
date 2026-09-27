@@ -1,12 +1,9 @@
 """
-Risk Manager: لایه‌ی ششم پایپ‌لاین (AI Decision Engine -> Risk Manager -> Recommendation Engine).
-
-بر اساس نوسان اخیر قیمت (تقریب ATR ساده) و کیفیت روند، سطح ریسک، حداکثر اندازه‌ی
-پوزیشن پیشنهادی، و درصد حد ضرر را محاسبه می‌کند. این خروجی مستقل از AI Decision
-Engine است تا بتوان بعداً منطق ریسک را (مثلا بر اساس نوسان بازار، همبستگی پرتفوی و...)
-ارتقا داد بدون دست‌زدن به موتور تصمیم.
+Risk Manager: ریسک قابل تنظیم از طریق Analysis Profile.
 """
 from __future__ import annotations
+
+from typing import Any
 
 import pandas as pd
 
@@ -15,24 +12,45 @@ from arya.models.analysis_result import RiskAssessment
 
 
 class RiskManager:
-    def assess(self, df: pd.DataFrame, decision: Decision) -> RiskAssessment:
-        volatility_pct = self._recent_volatility_pct(df)
+    def assess(
+        self,
+        df: pd.DataFrame,
+        decision: Decision,
+        config: dict[str, Any] | None = None,
+    ) -> RiskAssessment:
+        cfg = config or {}
 
-        if volatility_pct > 5 or decision.trend_quality < 0.3:
+        volatility_window = max(2, int(cfg.get("volatility_window", 14)))
+        high_volatility = float(cfg.get("high_volatility_pct", 5.0))
+        medium_volatility = float(cfg.get("medium_volatility_pct", 2.5))
+        high_trend = float(cfg.get("high_trend_threshold", 0.30))
+        medium_trend = float(cfg.get("medium_trend_threshold", 0.60))
+
+        high_position = float(cfg.get("high_max_position_pct", 5.0))
+        medium_position = float(cfg.get("medium_max_position_pct", 10.0))
+        low_position = float(cfg.get("low_max_position_pct", 20.0))
+
+        high_mult = float(cfg.get("high_stop_loss_multiplier", 1.5))
+        medium_mult = float(cfg.get("medium_stop_loss_multiplier", 1.2))
+        low_mult = float(cfg.get("low_stop_loss_multiplier", 1.0))
+
+        volatility_pct = self._recent_volatility_pct(df, window=volatility_window)
+
+        if volatility_pct > high_volatility or decision.trend_quality < high_trend:
             level = "high"
             risk_score = 0.75
-            max_position = 5.0
-            stop_loss = max(volatility_pct * 1.5, 4.0)
-        elif volatility_pct > 2.5 or decision.trend_quality < 0.6:
+            max_position = high_position
+            stop_loss = max(volatility_pct * high_mult, 4.0)
+        elif volatility_pct > medium_volatility or decision.trend_quality < medium_trend:
             level = "medium"
             risk_score = 0.45
-            max_position = 10.0
-            stop_loss = max(volatility_pct * 1.2, 3.0)
+            max_position = medium_position
+            stop_loss = max(volatility_pct * medium_mult, 3.0)
         else:
             level = "low"
             risk_score = 0.2
-            max_position = 20.0
-            stop_loss = max(volatility_pct, 2.0)
+            max_position = low_position
+            stop_loss = max(volatility_pct * low_mult, 2.0)
 
         notes = [
             f"نوسان اخیر قیمت حدود {volatility_pct:.2f}% است.",

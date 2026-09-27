@@ -24,12 +24,20 @@ def build_parser() -> argparse.ArgumentParser:
     analyze_p.add_argument("--ticker", required=True, help="نماد، مثلا FOOLAD یا BTCUSDT")
     analyze_p.add_argument("--market", default="stock", choices=["stock", "crypto", "forex"])
     analyze_p.add_argument("--timeframe", default="1d")
+    analyze_p.add_argument(
+        "--profile",
+        default=None,
+        choices=["balanced", "conservative", "momentum", "trend_following"],
+        help="پروفایل پارامترهای تحلیل",
+    )
 
     list_p = sub.add_parser("list-symbols", help="لیست نمادهای موجود در یک بازار")
     list_p.add_argument("--market", default="stock", choices=["stock", "crypto", "forex"])
 
     scan_p = sub.add_parser("scan", help="تحلیل تمام نمادهای یک بازار")
     scan_p.add_argument("--market", default="stock", choices=["stock", "crypto", "forex"])
+
+    sub.add_parser("gui", help="اجرای رابط گرافیکی فارسی ARYA")
 
     return parser
 
@@ -39,11 +47,29 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     console = Console()
 
+    if args.command == "gui":
+        try:
+            from arya.ui.app import main as gui_main
+        except ImportError as exc:
+            console.print(
+                '[bold red]رابط گرافیکی نصب نیست.[/bold red] '
+                '[bold]وابستگی GUI را با uv pip install --python .venv\\Scripts\\python.exe -e ".[gui]" نصب کنید.[/bold]'
+            )
+            console.print(f"جزئیات: {exc}")
+            return 2
+        return gui_main()
+
     app = AryaApp()
     language = app.settings.app.get("app", {}).get("language", "fa")
 
     if args.command == "analyze":
-        rec = app.analyze_symbol(args.ticker, market=args.market, timeframe=args.timeframe)
+        analysis_settings = app.settings.for_analysis(profile_name=args.profile)
+        rec = app.analyze_symbol(
+            args.ticker,
+            market=args.market,
+            timeframe=args.timeframe,
+            analysis_settings=analysis_settings,
+        )
         render_recommendation(rec, console, language=language)
 
     elif args.command == "list-symbols":
