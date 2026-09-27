@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Optional
+
+import copy
 
 from PySide6.QtCore import QObject, QThread, Signal, Slot, Qt
 from PySide6.QtWidgets import (
     QComboBox,
+    QDoubleSpinBox,
+    QFormLayout,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
@@ -14,6 +18,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMainWindow,
     QMessageBox,
+    QSpinBox,
     QProgressBar,
     QPushButton,
     QTableWidget,
@@ -133,6 +138,75 @@ class MainWindow(QMainWindow):
 
         root.addWidget(search_box)
 
+        settings_box = QGroupBox("تنظیمات قابل تغییر تحلیل")
+        settings_layout = QFormLayout(settings_box)
+
+        self.profile_combo = QComboBox()
+        self.profile_combo.addItem("متعادل", "balanced")
+        self.profile_combo.addItem("محافظه‌کار", "conservative")
+        self.profile_combo.addItem("مومنتوم", "momentum")
+        self.profile_combo.addItem("دنبال‌کننده روند", "trend_following")
+        self.profile_combo.currentIndexChanged.connect(self._load_profile_defaults)
+
+        self.history_limit = self._spin(50, 1000, 200, 50)
+        self.sma_period = self._spin(2, 500, 20, 1)
+        self.ema_period = self._spin(2, 500, 50, 1)
+        self.rsi_period = self._spin(2, 200, 14, 1)
+        self.rsi_overbought = self._spin(50, 100, 70, 1)
+        self.rsi_oversold = self._spin(0, 50, 30, 1)
+        self.macd_fast = self._spin(2, 100, 12, 1)
+        self.macd_slow = self._spin(3, 200, 26, 1)
+        self.macd_signal = self._spin(2, 100, 9, 1)
+        self.bb_period = self._spin(2, 500, 20, 1)
+        self.bb_std = self._double_spin(0.5, 5.0, 2.0, 0.1)
+        self.buy_threshold = self._double_spin(0.01, 1.0, 0.25, 0.01)
+        self.sell_threshold = self._double_spin(-1.0, -0.01, -0.25, 0.01)
+
+        settings_layout.addRow("پروفایل:", self.profile_combo)
+        settings_layout.addRow("تعداد کندل تاریخچه:", self.history_limit)
+
+        ma_row = QHBoxLayout()
+        ma_row.addWidget(QLabel("SMA"))
+        ma_row.addWidget(self.sma_period)
+        ma_row.addWidget(QLabel("EMA"))
+        ma_row.addWidget(self.ema_period)
+        settings_layout.addRow("میانگین‌ها:", ma_row)
+
+        rsi_row = QHBoxLayout()
+        rsi_row.addWidget(QLabel("دوره"))
+        rsi_row.addWidget(self.rsi_period)
+        rsi_row.addWidget(QLabel("اشباع خرید"))
+        rsi_row.addWidget(self.rsi_overbought)
+        rsi_row.addWidget(QLabel("اشباع فروش"))
+        rsi_row.addWidget(self.rsi_oversold)
+        settings_layout.addRow("RSI:", rsi_row)
+
+        macd_row = QHBoxLayout()
+        macd_row.addWidget(QLabel("سریع"))
+        macd_row.addWidget(self.macd_fast)
+        macd_row.addWidget(QLabel("کند"))
+        macd_row.addWidget(self.macd_slow)
+        macd_row.addWidget(QLabel("سیگنال"))
+        macd_row.addWidget(self.macd_signal)
+        settings_layout.addRow("MACD:", macd_row)
+
+        bb_row = QHBoxLayout()
+        bb_row.addWidget(QLabel("دوره"))
+        bb_row.addWidget(self.bb_period)
+        bb_row.addWidget(QLabel("انحراف معیار"))
+        bb_row.addWidget(self.bb_std)
+        settings_layout.addRow("بولینگر:", bb_row)
+
+        decision_row = QHBoxLayout()
+        decision_row.addWidget(QLabel("آستانه خرید"))
+        decision_row.addWidget(self.buy_threshold)
+        decision_row.addWidget(QLabel("آستانه فروش"))
+        decision_row.addWidget(self.sell_threshold)
+        settings_layout.addRow("تصمیم:", decision_row)
+
+        root.addWidget(settings_box)
+        self._load_profile_defaults()
+
         self.progress = QProgressBar()
         self.progress.setRange(0, 0)
         self.progress.setVisible(False)
@@ -250,6 +324,91 @@ class MainWindow(QMainWindow):
             """
         )
 
+    @staticmethod
+    def _spin(minimum: int, maximum: int, value: int, step: int) -> QSpinBox:
+        box = QSpinBox()
+        box.setRange(minimum, maximum)
+        box.setValue(value)
+        box.setSingleStep(step)
+        return box
+
+    @staticmethod
+    def _double_spin(minimum: float, maximum: float, value: float, step: float) -> QDoubleSpinBox:
+        box = QDoubleSpinBox()
+        box.setRange(minimum, maximum)
+        box.setValue(value)
+        box.setSingleStep(step)
+        box.setDecimals(2)
+        return box
+
+    def _load_profile_defaults(self) -> None:
+        profile_name = self.profile_combo.currentData()
+        try:
+            profile = self.settings.analysis_profile(profile_name)
+        except Exception:
+            return
+        indicators = profile.get("indicators", {})
+        trend = indicators.get("trend", {})
+        momentum = indicators.get("momentum", {})
+        volatility = indicators.get("volatility", {})
+
+        self.history_limit.setValue(int(profile.get("history_limit", 200)))
+        self.sma_period.setValue(int(trend.get("sma", {}).get("params", {}).get("period", 20)))
+        self.ema_period.setValue(int(trend.get("ema", {}).get("params", {}).get("period", 50)))
+        self.rsi_period.setValue(int(momentum.get("rsi", {}).get("params", {}).get("period", 14)))
+        self.rsi_overbought.setValue(int(momentum.get("rsi", {}).get("params", {}).get("overbought", 70)))
+        self.rsi_oversold.setValue(int(momentum.get("rsi", {}).get("params", {}).get("oversold", 30)))
+        self.macd_fast.setValue(int(momentum.get("macd", {}).get("params", {}).get("fast", 12)))
+        self.macd_slow.setValue(int(momentum.get("macd", {}).get("params", {}).get("slow", 26)))
+        self.macd_signal.setValue(int(momentum.get("macd", {}).get("params", {}).get("signal", 9)))
+        self.bb_period.setValue(int(volatility.get("bollinger", {}).get("params", {}).get("period", 20)))
+        self.bb_std.setValue(float(volatility.get("bollinger", {}).get("params", {}).get("std_dev", 2)))
+        decision = profile.get("decision", {})
+        self.buy_threshold.setValue(float(decision.get("buy_threshold", 0.25)))
+        self.sell_threshold.setValue(float(decision.get("sell_threshold", -0.25)))
+
+    def _analysis_settings(self):
+        profile_name = self.profile_combo.currentData()
+        indicator_overrides: dict[str, Any] = copy.deepcopy(self.settings.analysis_profile(profile_name).get("indicators", {}))
+        for group, name, params in [
+            ("trend", "sma", {"period": self.sma_period.value()}),
+            ("trend", "ema", {"period": self.ema_period.value()}),
+            (
+                "momentum",
+                "rsi",
+                {
+                    "period": self.rsi_period.value(),
+                    "overbought": self.rsi_overbought.value(),
+                    "oversold": self.rsi_oversold.value(),
+                },
+            ),
+            (
+                "momentum",
+                "macd",
+                {
+                    "fast": self.macd_fast.value(),
+                    "slow": self.macd_slow.value(),
+                    "signal": self.macd_signal.value(),
+                },
+            ),
+            (
+                "volatility",
+                "bollinger",
+                {"period": self.bb_period.value(), "std_dev": self.bb_std.value()},
+            ),
+        ]:
+            indicator_overrides.setdefault(group, {}).setdefault(name, {})["params"] = params
+
+        return self.settings.for_analysis(
+            profile_name=profile_name,
+            indicator_overrides=indicator_overrides,
+            decision_overrides={
+                "buy_threshold": self.buy_threshold.value(),
+                "sell_threshold": self.sell_threshold.value(),
+            },
+            history_limit=self.history_limit.value(),
+        )
+
     def _start_analysis(self) -> None:
         if self._thread is not None:
             return
@@ -262,6 +421,7 @@ class MainWindow(QMainWindow):
 
         market = self.market_combo.currentData()
         timeframe = self.timeframe_combo.currentData()
+        analysis_settings = self._analysis_settings()
 
         self.analyze_button.setEnabled(False)
         self.progress.setVisible(True)
@@ -269,7 +429,7 @@ class MainWindow(QMainWindow):
 
         self._thread = QThread(self)
         self._worker = AnalysisWorker(
-            self.settings,
+            analysis_settings,
             ticker,
             market,
             timeframe,
