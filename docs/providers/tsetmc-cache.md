@@ -96,3 +96,17 @@ tests/storage/test_history_cache.py این موارد را پوشش می‌ده�
 - configs/scheduler.yaml
 
 Pipeline اصلی AryaApp.analyze_symbol() اکنون از MarketHistoryService استفاده می‌کند.
+
+
+## نمایش فارسی
+
+لایه presentation دارای ترجمه مستقل است و با `language: fa` از `configs/app.yaml` کنترل می‌شود.
+
+مقادیر داخلی موتور عمداً ثابت و انگلیسی باقی می‌مانند، اما Dashboard در حالت فارسی آن‌ها را نمایش می‌دهد:
+
+- `buy / hold / sell` → خرید / نگهداری / فروش
+- `low / medium / high` → کم / متوسط / زیاد
+- `technical` → فنی
+- هشدارهای شناخته‌شده مانند `price_above_sma` به متن فارسی تبدیل می‌شوند.
+
+این جداسازی مانع وابستگی API داخلی به زبان رابط می‌شود.
