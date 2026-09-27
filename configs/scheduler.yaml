@@ -1,5 +1,5 @@
 # زمان‌بندی به‌روزرسانی خودکار. هر بازار می‌تواند زمان‌بندی مجزا داشته باشد.
-# مقادیر مجاز: 30s, 1m, 5m, 15m, 30m, 1h  یا cron-style در آینده.
+# مقادیر مجاز: 30s, 1m, 5m, 15m, 30m, 1h یا cron-style در آینده.
 
 global_default: "5m"
 
@@ -17,6 +17,16 @@ markets:
   forex:
     interval: "5m"
     market_hours_only: false
+
+history_cache:
+  # Daily TSETMC history changes during the session, so refresh quickly while
+  # the market is open. Outside the session, retain yesterday/latest data
+  # longer and tolerate provider outages.
+  stock:
+    fresh_ttl_seconds: 60
+    stale_grace_seconds: 900
+    outside_session_ttl_seconds: 21600
+    outside_session_stale_grace_seconds: 172800
 
 background_jobs:
   news_refresh: "15m"
