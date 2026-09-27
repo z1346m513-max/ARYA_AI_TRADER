@@ -1,6 +1,3 @@
-import tempfile
-from pathlib import Path
-
 import pytest
 
 from arya.app.bootstrap import AryaApp
@@ -9,10 +6,11 @@ from arya.models.analysis_result import Action
 
 
 @pytest.fixture
-def app(tmp_path, monkeypatch):
+def app(tmp_path):
     settings = Settings.load()
-    # اجرای تست‌ها روی یک دیتابیس موقت تا فایل واقعی پروژه دست‌نخورده بماند
+    # Pipeline unit test must remain offline/deterministic.
     settings.app["storage"]["path"] = str(tmp_path / "test_arya.db")
+    settings.providers.setdefault("market", {}).setdefault("stock", {})["driver"] = "mock"
     return AryaApp(settings=settings)
 
 
