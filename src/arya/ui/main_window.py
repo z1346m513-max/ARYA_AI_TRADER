@@ -8,6 +8,7 @@ import copy
 
 from PySide6.QtCore import QObject, QThread, Signal, Slot, Qt
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QDoubleSpinBox,
     QFormLayout,
@@ -149,6 +150,19 @@ class MainWindow(QMainWindow):
         self.profile_combo.currentIndexChanged.connect(self._load_profile_defaults)
 
         self.history_limit = self._spin(50, 1000, 200, 50)
+        self.sma_enabled = QCheckBox("فعال")
+        self.sma_weight = self._double_spin(0.0, 5.0, 0.5, 0.1)
+        self.ema_enabled = QCheckBox("فعال")
+        self.ema_weight = self._double_spin(0.0, 5.0, 0.5, 0.1)
+        self.rsi_enabled = QCheckBox("فعال")
+        self.rsi_weight = self._double_spin(0.0, 5.0, 0.6, 0.1)
+        self.macd_enabled = QCheckBox("فعال")
+        self.macd_weight = self._double_spin(0.0, 5.0, 0.4, 0.1)
+        self.bb_enabled = QCheckBox("فعال")
+        self.bb_weight = self._double_spin(0.0, 5.0, 1.0, 0.1)
+        self.obv_enabled = QCheckBox("فعال")
+        self.obv_weight = self._double_spin(0.0, 5.0, 1.0, 0.1)
+
         self.sma_period = self._spin(2, 500, 20, 1)
         self.ema_period = self._spin(2, 500, 50, 1)
         self.rsi_period = self._spin(2, 200, 14, 1)
@@ -161,9 +175,27 @@ class MainWindow(QMainWindow):
         self.bb_std = self._double_spin(0.5, 5.0, 2.0, 0.1)
         self.buy_threshold = self._double_spin(0.01, 1.0, 0.25, 0.01)
         self.sell_threshold = self._double_spin(-1.0, -0.01, -0.25, 0.01)
+        self.risk_window = self._spin(2, 100, 14, 1)
+        self.high_volatility = self._double_spin(1.0, 20.0, 5.0, 0.5)
+        self.medium_volatility = self._double_spin(0.5, 10.0, 2.5, 0.5)
 
         settings_layout.addRow("پروفایل:", self.profile_combo)
         settings_layout.addRow("تعداد کندل تاریخچه:", self.history_limit)
+
+        indicator_row = QHBoxLayout()
+        for label, enabled, weight in [
+            ("SMA", self.sma_enabled, self.sma_weight),
+            ("EMA", self.ema_enabled, self.ema_weight),
+            ("RSI", self.rsi_enabled, self.rsi_weight),
+            ("MACD", self.macd_enabled, self.macd_weight),
+            ("BB", self.bb_enabled, self.bb_weight),
+            ("OBV", self.obv_enabled, self.obv_weight),
+        ]:
+            indicator_row.addWidget(QLabel(label))
+            indicator_row.addWidget(enabled)
+            indicator_row.addWidget(QLabel("وزن"))
+            indicator_row.addWidget(weight)
+        settings_layout.addRow("اندیکاتورها:", indicator_row)
 
         ma_row = QHBoxLayout()
         ma_row.addWidget(QLabel("SMA"))
@@ -203,6 +235,15 @@ class MainWindow(QMainWindow):
         decision_row.addWidget(QLabel("آستانه فروش"))
         decision_row.addWidget(self.sell_threshold)
         settings_layout.addRow("تصمیم:", decision_row)
+
+        risk_row = QHBoxLayout()
+        risk_row.addWidget(QLabel("پنجره نوسان"))
+        risk_row.addWidget(self.risk_window)
+        risk_row.addWidget(QLabel("آستانه نوسان زیاد"))
+        risk_row.addWidget(self.high_volatility)
+        risk_row.addWidget(QLabel("آستانه نوسان متوسط"))
+        risk_row.addWidget(self.medium_volatility)
+        settings_layout.addRow("ریسک:", risk_row)
 
         root.addWidget(settings_box)
         self._load_profile_defaults()
@@ -363,9 +404,29 @@ class MainWindow(QMainWindow):
         self.macd_signal.setValue(int(momentum.get("macd", {}).get("params", {}).get("signal", 9)))
         self.bb_period.setValue(int(volatility.get("bollinger", {}).get("params", {}).get("period", 20)))
         self.bb_std.setValue(float(volatility.get("bollinger", {}).get("params", {}).get("std_dev", 2)))
+
+        base = self.settings.indicators
+        self.sma_enabled.setChecked(bool(trend.get("sma", {}).get("enabled", base.get("trend", {}).get("sma", {}).get("enabled", True))))
+        self.ema_enabled.setChecked(bool(trend.get("ema", {}).get("enabled", base.get("trend", {}).get("ema", {}).get("enabled", True))))
+        self.rsi_enabled.setChecked(bool(momentum.get("rsi", {}).get("enabled", base.get("momentum", {}).get("rsi", {}).get("enabled", True))))
+        self.macd_enabled.setChecked(bool(momentum.get("macd", {}).get("enabled", base.get("momentum", {}).get("macd", {}).get("enabled", True))))
+        self.bb_enabled.setChecked(bool(volatility.get("bollinger", {}).get("enabled", base.get("volatility", {}).get("bollinger", {}).get("enabled", True))))
+        self.obv_enabled.setChecked(bool(base.get("volume", {}).get("obv", {}).get("enabled", True)))
+
+        self.sma_weight.setValue(float(trend.get("sma", {}).get("weight", base.get("trend", {}).get("sma", {}).get("weight", 0.5))))
+        self.ema_weight.setValue(float(trend.get("ema", {}).get("weight", base.get("trend", {}).get("ema", {}).get("weight", 0.5))))
+        self.rsi_weight.setValue(float(momentum.get("rsi", {}).get("weight", base.get("momentum", {}).get("rsi", {}).get("weight", 0.6))))
+        self.macd_weight.setValue(float(momentum.get("macd", {}).get("weight", base.get("momentum", {}).get("macd", {}).get("weight", 0.4))))
+        self.bb_weight.setValue(float(volatility.get("bollinger", {}).get("weight", base.get("volatility", {}).get("bollinger", {}).get("weight", 1.0))))
+        self.obv_weight.setValue(float(base.get("volume", {}).get("obv", {}).get("weight", 1.0)))
+
         decision = profile.get("decision", {})
         self.buy_threshold.setValue(float(decision.get("buy_threshold", 0.25)))
         self.sell_threshold.setValue(float(decision.get("sell_threshold", -0.25)))
+        risk = profile.get("risk", {})
+        self.risk_window.setValue(int(risk.get("volatility_window", 14)))
+        self.high_volatility.setValue(float(risk.get("high_volatility_pct", 5.0)))
+        self.medium_volatility.setValue(float(risk.get("medium_volatility_pct", 2.5)))
 
     def _analysis_settings(self):
         profile_name = self.profile_combo.currentData()
@@ -399,6 +460,19 @@ class MainWindow(QMainWindow):
         ]:
             indicator_overrides.setdefault(group, {}).setdefault(name, {})["params"] = params
 
+        enabled_weights = {
+            ("trend", "sma"): (self.sma_enabled.isChecked(), self.sma_weight.value()),
+            ("trend", "ema"): (self.ema_enabled.isChecked(), self.ema_weight.value()),
+            ("momentum", "rsi"): (self.rsi_enabled.isChecked(), self.rsi_weight.value()),
+            ("momentum", "macd"): (self.macd_enabled.isChecked(), self.macd_weight.value()),
+            ("volatility", "bollinger"): (self.bb_enabled.isChecked(), self.bb_weight.value()),
+            ("volume", "obv"): (self.obv_enabled.isChecked(), self.obv_weight.value()),
+        }
+        for (group, name), (enabled, weight) in enabled_weights.items():
+            indicator_overrides.setdefault(group, {}).setdefault(name, {})
+            indicator_overrides[group][name]["enabled"] = enabled
+            indicator_overrides[group][name]["weight"] = weight
+
         return self.settings.for_analysis(
             profile_name=profile_name,
             indicator_overrides=indicator_overrides,
@@ -407,6 +481,11 @@ class MainWindow(QMainWindow):
                 "sell_threshold": self.sell_threshold.value(),
             },
             history_limit=self.history_limit.value(),
+            risk_overrides={
+                "volatility_window": self.risk_window.value(),
+                "high_volatility_pct": self.high_volatility.value(),
+                "medium_volatility_pct": self.medium_volatility.value(),
+            },
         )
 
     def _start_analysis(self) -> None:
