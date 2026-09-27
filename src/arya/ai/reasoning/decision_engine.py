@@ -37,31 +37,42 @@ class RuleBasedDecisionEngine:
         for section in section_scores:
             if abs(section.score) < 0.1:
                 continue
-            direction = "صعودی" if section.score > 0 else "نزولی"
+
             if language == "en":
+                section_name = translate_section(section.section, "en")
                 direction = "bullish" if section.score > 0 else "bearish"
-            reasons.append(
-                f"بخش «{translate_section(section.section, language)}» "
-                f"{('سیگنال ' + direction) if language != 'en' else ('signal: ' + direction)} "
-                f"با قدرت {abs(section.score):.2f} "
-                f"و اطمینان {section.confidence:.2f} "
-                f"{'می‌دهد.' if language != 'en' else 'given.'}"
-            )
+                reasons.append(
+                    f"Section '{section_name}' gives a {direction} signal "
+                    f"with strength {abs(section.score):.2f} "
+                    f"and confidence {section.confidence:.2f}."
+                )
+            else:
+                section_name = translate_section(section.section, "fa")
+                direction = "صعودی" if section.score > 0 else "نزولی"
+                reasons.append(
+                    f"بخش «{section_name}» سیگنال {direction} "
+                    f"با قدرت {abs(section.score):.2f} "
+                    f"و اطمینان {section.confidence:.2f} می‌دهد."
+                )
 
         if overall_score >= self.BUY_THRESHOLD:
             reasons.append(
-                f"امتیاز کلی ({overall_score:.2f}) "
-                f"{'بالاتر از آستانه خرید است.' if language != 'en' else 'is above the buy threshold.'}"
+                f"Overall score ({overall_score:.2f}) "
+                f"{'is above the buy threshold.' if language == 'en' else 'بالاتر از آستانه خرید است.'}"
+                if language == "en"
+                else f"امتیاز کلی ({overall_score:.2f}) بالاتر از آستانه خرید است."
             )
         elif overall_score <= self.SELL_THRESHOLD:
             reasons.append(
-                f"امتیاز کلی ({overall_score:.2f}) "
-                f"{'پایین‌تر از آستانه فروش است.' if language != 'en' else 'is below the sell threshold.'}"
+                f"Overall score ({overall_score:.2f}) is below the sell threshold."
+                if language == "en"
+                else f"امتیاز کلی ({overall_score:.2f}) پایین‌تر از آستانه فروش است."
             )
         else:
             reasons.append(
-                f"امتیاز کلی ({overall_score:.2f}) "
-                f"{'در محدوده خنثی قرار دارد.' if language != 'en' else 'is in the neutral range.'}"
+                f"Overall score ({overall_score:.2f}) is in the neutral range."
+                if language == "en"
+                else f"امتیاز کلی ({overall_score:.2f}) در محدوده خنثی قرار دارد."
             )
 
         agreeing = sum(
@@ -79,9 +90,9 @@ class RuleBasedDecisionEngine:
 
         if not reasons:
             reasons.append(
-                "داده کافی برای استخراج دلیل مشخص وجود ندارد."
-                if language != "en"
-                else "There is not enough data to produce a specific reason."
+                "There is not enough data to produce a specific reason."
+                if language == "en"
+                else "داده کافی برای استخراج دلیل مشخص وجود ندارد."
             )
 
         return Decision(
