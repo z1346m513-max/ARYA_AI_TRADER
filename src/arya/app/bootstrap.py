@@ -134,6 +134,7 @@ class AryaApp:
         return self._history_service_for_market(market).refresh_cached_keys(
             market=market,
             limit=limit,
+            adjust=self.settings.provider_for(market).get("adjust", False),
         )
 
     def list_symbols(self, market: str = "stock") -> list[Symbol]:
