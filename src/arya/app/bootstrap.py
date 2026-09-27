@@ -2,8 +2,7 @@
 Bootstrap: نقطه‌ی مرکزی راه‌اندازی برنامه. تمام لایه‌های پایپ‌لاین را می‌سازد
 و متد analyze_symbol() را در اختیار CLI / Dashboard / Scheduler قرار می‌دهد.
 
-زنجیره‌ی اجرا دقیقاً منطبق بر دیاگرام معماری است:
-
+زنجیره‌ی اجرا:
     Providers -> Storage -> Indicator Engine -> Analysis Engine ->
     Scoring Engine -> AI Decision Engine -> Risk Manager ->
     Recommendation Engine -> Dashboard
@@ -21,6 +20,7 @@ from arya.models.analysis_result import Recommendation
 from arya.models.market_data import Symbol
 from arya.providers.base import ProviderRegistry
 import arya.providers.market.mock_provider  # noqa: F401  (ثبت درایور "mock")
+import arya.providers.market.tsetmc_provider  # noqa: F401  (ثبت درایور "tsetmc")
 from arya.risk.risk_manager import RiskManager
 from arya.storage.cache import OHLCVStore
 from arya.technical.indicator_engine import IndicatorEngine
@@ -53,7 +53,10 @@ class AryaApp:
     def _provider_for_market(self, market: str):
         cfg = self.settings.provider_for(market)
         driver = cfg.get("driver", "mock")
-        return ProviderRegistry.create(driver, market=market)
+        kwargs = {"market": market}
+        if "adjust" in cfg:
+            kwargs["adjust"] = cfg["adjust"]
+        return ProviderRegistry.create(driver, **kwargs)
 
     def analyze_symbol(self, ticker: str, market: str = "stock", timeframe: str = "1d") -> Recommendation:
         """اجرای کامل پایپ‌لاین برای یک نماد و برگرداندن Recommendation نهایی."""
