@@ -100,6 +100,7 @@ def test_off_session_cache_stays_fresh_for_longer(tmp_path):
     result = service.get_or_refresh(
         Symbol("فملی", "stock"),
         now=now + timedelta(hours=5),
+        limit=3,
     )
 
     assert result.status is CacheStatus.FRESH
