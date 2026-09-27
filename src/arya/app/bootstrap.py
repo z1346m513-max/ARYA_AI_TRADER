@@ -76,16 +76,29 @@ class AryaApp:
         ticker: str,
         market: str = "stock",
         timeframe: str = "1d",
+        *,
+        analysis_settings: Settings | None = None,
     ) -> Recommendation:
-        """اجرای کامل پایپ‌لاین با cache-aside و refresh هوشمند."""
+        """اجرای کامل پایپ‌لاین با تنظیمات پایه یا override مستقل."""
+        runtime_settings = analysis_settings or self.settings
         symbol = Symbol(ticker=ticker, market=market)
+        runtime = runtime_settings.analysis.get("runtime", {})
+        history_limit = int(runtime.get("history_limit", 200))
 
         # 1) Smart market-history cache -> provider refresh/fallback
-        history: HistoryResult = self._history_service_for_market(market).get_or_refresh(
+        if runtime_settings is self.settings:
+            history_service = self._history_service_for_market(market)
+        else:
+            history_service = MarketHistoryService(
+                settings=runtime_settings,
+                cache=self.history_cache,
+                provider=self._provider_for_market(market),
+            )
+        history: HistoryResult = history_service.get_or_refresh(
             symbol,
             timeframe=timeframe,
-            limit=200,
-            adjust=self.settings.provider_for(market).get("adjust", False),
+            limit=history_limit,
+            adjust=runtime_settings.provider_for(market).get("adjust", False),
         )
         if history.warning:
             logger.warning("%s", history.warning)
@@ -95,28 +108,32 @@ class AryaApp:
         df = history.series.to_dataframe()
 
         # 3) Indicator Engine
-        indicator_results = self.indicator_engine.run(df)
+        indicator_results = IndicatorEngine(runtime_settings).run(df)
 
         # 4) Analysis Engine
         technical_section = self.technical_analyzer.analyze(indicator_results)
         section_scores = [technical_section]
 
         # 5) Scoring Engine
-        overall_score, overall_confidence, section_scores = self.scoring_engine.combine(
-            section_scores
-        )
+        overall_score, overall_confidence, section_scores = ScoringEngine(
+            runtime_settings
+        ).combine(section_scores)
 
         # 6) AI Decision Engine
-        language = self.settings.app.get("app", {}).get("language", "fa")
-        decision = self.decision_engine.decide(
+        language = runtime_settings.app.get("app", {}).get("language", "fa")
+        decision_cfg = runtime_settings.analysis.get("runtime", {}).get("decision", {})
+        decision = RuleBasedDecisionEngine().decide(
             overall_score,
             overall_confidence,
             section_scores,
             language=language,
+            buy_threshold=float(decision_cfg.get("buy_threshold", 0.25)),
+            sell_threshold=float(decision_cfg.get("sell_threshold", -0.25)),
         )
 
         # 7) Risk Manager
-        risk = self.risk_manager.assess(df, decision)
+        risk_cfg = runtime_settings.analysis.get("runtime", {}).get("risk", {})
+        risk = RiskManager().assess(df, decision, config=risk_cfg)
 
         # 8) Recommendation Engine
         return self.recommendation_engine.build(
