@@ -71,3 +71,23 @@ def test_internal_model_values_remain_stable():
     assert rec.action is Action.HOLD
     assert rec.risk.risk_level == "medium"
     assert rec.section_scores[0].section == "technical"
+
+
+def test_decision_engine_localizes_section_name():
+    from arya.ai.reasoning.decision_engine import RuleBasedDecisionEngine
+
+    decision = RuleBasedDecisionEngine().decide(
+        0.1188,
+        0.3333,
+        [
+            SectionScore(
+                section="technical",
+                score=0.1188,
+                confidence=0.3333,
+            )
+        ],
+        language="fa",
+    )
+
+    assert "بخش «فنی»" in decision.reasons[0]
+    assert "technical" not in decision.reasons[0]
