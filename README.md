@@ -97,3 +97,15 @@ arya-gui
 ```
 
 جزئیات در docs/ui/persian-rtl.md آمده است.
+
+## تنظیمات تحلیل و پروفایل‌ها
+
+پارامترهای تحلیل به‌صورت profile و runtime override قابل تغییر هستند. فایل `configs/analysis.yaml` پروفایل‌های آماده را نگهداری می‌کند و GUI نیز همین قرارداد را مصرف می‌کند.
+
+نمونه:
+
+```text
+arya analyze --ticker "فملی" --market stock --timeframe 1d --profile momentum
+```
+
+در GUI می‌توان دوره‌ها، حدود RSI، پارامترهای MACD و Bollinger، فعال/غیرفعال بودن اندیکاتورها، وزن‌ها، history limit، آستانه‌های تصمیم و پارامترهای اصلی ریسک را برای همان تحلیل تغییر داد.
