@@ -152,8 +152,13 @@ class MarketHistoryService:
         if now.tzinfo is None:
             now = now.replace(tzinfo=timezone.utc)
 
+        provider_name = getattr(self.provider, "name", self.provider.__class__.__name__).strip().lower()
         key = make_history_cache_key(
-            symbol.market, symbol.ticker, timeframe, adjust
+            provider_name,
+            symbol.market,
+            symbol.ticker,
+            timeframe,
+            adjust,
         )
         record = self.cache.load(key)
 
@@ -180,6 +185,7 @@ class MarketHistoryService:
                 adjusted=adjust,
                 fetched_at=now,
                 cache_key=key,
+                provider=provider_name,
             )
             return HistoryResult(
                 series=saved.series,
@@ -221,7 +227,10 @@ class MarketHistoryService:
         current = now or utc_now()
         results: list[HistoryResult] = []
 
-        for key in self.cache.keys(market):
+        provider_name = getattr(
+            self.provider, "name", self.provider.__class__.__name__
+        ).strip().lower()
+        for key in self.cache.keys(market, provider=provider_name):
             record = self.cache.load(key)
             if record is None:
                 continue
