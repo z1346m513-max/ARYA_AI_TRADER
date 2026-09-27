@@ -56,7 +56,7 @@ class MarketSession:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.timezone = ZoneInfo(
-            settings.app.get("timezone", "Asia/Tehran")
+            settings.app.get("app", {}).get("timezone", "Asia/Tehran")
         )
 
     def is_open(self, market: str, now: datetime) -> bool:
