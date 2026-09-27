@@ -107,10 +107,12 @@ class AryaApp:
         )
 
         # 6) AI Decision Engine
+        language = self.settings.app.get("app", {}).get("language", "fa")
         decision = self.decision_engine.decide(
             overall_score,
             overall_confidence,
             section_scores,
+            language=language,
         )
 
         # 7) Risk Manager
