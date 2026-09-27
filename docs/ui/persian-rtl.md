@@ -73,3 +73,34 @@
 برای کل پروژه:
 
     python -m pytest -v
+
+## تنظیمات پیشرفته تحلیل
+
+تنظیمات تحلیل بخشی از هسته ARYA هستند و فقط مخصوص GUI نیستند.
+
+پروفایل‌های آماده در configs/analysis.yaml:
+- balanced
+- conservative
+- momentum
+- trend_following
+
+هر تحلیل می‌تواند profile مخصوص خود را بگیرد و سپس overrideهای لحظه‌ای روی آن اعمال کند.
+
+موارد قابل تنظیم:
+- فعال/غیرفعال کردن SMA، EMA، RSI، MACD، Bollinger و OBV
+- دوره SMA و EMA
+- دوره و حدود RSI
+- Fast/Slow/Signal در MACD
+- دوره و انحراف معیار Bollinger
+- وزن هر اندیکاتور
+- تعداد کندل تاریخچه
+- آستانه خرید و فروش
+- پنجره محاسبه نوسان ریسک و آستانه‌های نوسان
+
+تنظیمات لحظه‌ای به صورت copy از Settings اعمال می‌شوند و فایل‌های پایه را تغییر نمی‌دهند.
+
+مثال CLI:
+
+    arya analyze --ticker "فملی" --market stock --timeframe 1d --profile momentum
+
+پروفایل برای تحلیل قابل تعویض است و از همان TSETMC/Cache/Indicator/Decision/Risk pipeline استفاده می‌کند.
