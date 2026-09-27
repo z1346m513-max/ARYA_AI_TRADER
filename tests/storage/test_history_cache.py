@@ -58,11 +58,11 @@ class FakeProvider:
 
 
 def test_cache_key_is_stable_and_excludes_limit():
-    assert make_history_cache_key("stock", " فملی ", "1d", False) == (
-        "ohlcv:stock:فملی:1d:adjust=0"
+    assert make_history_cache_key("tsetmc", "stock", " فملی ", "1d", False) == (
+        "ohlcv:tsetmc:stock:فملی:1d:adjust=0"
     )
-    assert make_history_cache_key("stock", "فملی", "1d", False) == (
-        "ohlcv:stock:فملی:1d:adjust=0"
+    assert make_history_cache_key("tsetmc", "stock", "فملی", "1d", False) == (
+        "ohlcv:tsetmc:stock:فملی:1d:adjust=0"
     )
 
 
