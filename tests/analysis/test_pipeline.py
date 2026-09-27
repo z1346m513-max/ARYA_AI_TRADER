@@ -28,3 +28,8 @@ def test_analyze_symbol_returns_valid_recommendation(app):
 def test_list_symbols(app):
     symbols = app.list_symbols(market="crypto")
     assert len(symbols) > 0
+
+
+def test_mock_provider_does_not_receive_tsetmc_only_options(app):
+    provider = app._provider_for_market("stock")
+    assert provider.name == "mock"
