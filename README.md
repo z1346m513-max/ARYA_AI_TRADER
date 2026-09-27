@@ -6,6 +6,8 @@
 > **وضعیت فعلی: Milestone 1 — Core Pipeline**
 > پایپ‌لاین اصلی کامل و اجراشدنی است (با داده‌ی Mock). GUI با PySide6،
 > اتصال Providerهای واقعی، بک‌تست و نصب‌کننده‌ی ویندوز در نقشه راه (`docs/roadmap`) هستند.
+> پوستهٔ اولیهٔ داشبورد PySide6 برای پیش‌نمایش تجربهٔ کاربری اضافه شده است؛ دادهٔ زنده و
+> ابزارهای واچ‌لیست/کدال تا اتصال Provider مجاز هنوز فعال نیستند.
 
 ## معماری کلی
 
@@ -45,6 +47,15 @@ arya scan --market crypto
 ```bash
 PYTHONPATH=src python -m arya.cli.main analyze --ticker BTCUSDT --market crypto
 ```
+
+اجرای داشبورد گرافیکی اولیه:
+
+```bash
+pip install -e '.[gui]'
+arya gui
+```
+
+راهنمای وضعیت و ظاهر رابط در [`docs/user_manual/gui_dashboard.md`](docs/user_manual/gui_dashboard.md) آمده است.
 
 ## اجرای تست‌ها
 

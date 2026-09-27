@@ -31,6 +31,8 @@ def build_parser() -> argparse.ArgumentParser:
     scan_p = sub.add_parser("scan", help="تحلیل تمام نمادهای یک بازار")
     scan_p.add_argument("--market", default="stock", choices=["stock", "crypto", "forex"])
 
+    sub.add_parser("gui", help="اجرای داشبورد گرافیکی PySide6")
+
     return parser
 
 
@@ -38,6 +40,15 @@ def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     console = Console()
+
+    if args.command == "gui":
+        from arya.ui.app import run_dashboard
+
+        try:
+            return run_dashboard()
+        except RuntimeError as exc:
+            console.print(f"[red]{exc}[/red]")
+            return 2
 
     app = AryaApp()
 
