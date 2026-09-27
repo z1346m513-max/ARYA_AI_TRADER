@@ -54,7 +54,8 @@ class AryaApp:
         cfg = self.settings.provider_for(market)
         driver = cfg.get("driver", "mock")
         kwargs = {"market": market}
-        if "adjust" in cfg:
+        # تنظیمات اختصاصی هر Provider فقط به همان Provider ارسال شود.
+        if driver == "tsetmc" and "adjust" in cfg:
             kwargs["adjust"] = cfg["adjust"]
         return ProviderRegistry.create(driver, **kwargs)
 
