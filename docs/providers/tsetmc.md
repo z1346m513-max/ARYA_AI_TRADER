@@ -42,6 +42,10 @@ OHLCVSeries
    +--> Analysis / Risk / Recommendation
 ```
 
+## Smart history cache
+
+جزئیات cache-aside، cache key، TTL، stale fallback و scheduler refresh در [tsetmc-cache.md](tsetmc-cache.md) آمده است. Pipeline اکنون قبل از دسترسی به TSETMC، cache را بررسی می‌کند.
+
 ## نکات طراحی
 
 Provider عمداً به `AryaApp` یا Indicator Engine وابسته نیست. بنابراین:
