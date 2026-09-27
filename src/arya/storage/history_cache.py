@@ -27,6 +27,7 @@ class CacheStatus(str, Enum):
 @dataclass(frozen=True)
 class CacheRecord:
     key: str
+    provider: str
     series: OHLCVSeries
     fetched_at: datetime
     last_candle_at: datetime | None
@@ -45,15 +46,17 @@ def normalize_ticker(ticker: str) -> str:
 
 
 def make_history_cache_key(
+    provider: str,
     market: str,
     ticker: str,
     timeframe: str,
     adjust: bool = False,
 ) -> str:
-    """Build a stable key; request limit is intentionally excluded."""
+    """Build a stable source-specific key; request limit is excluded."""
     return (
-        f"ohlcv:{market.strip().lower()}:{normalize_ticker(ticker)}:"
-        f"{timeframe.strip().lower()}:adjust={int(bool(adjust))}"
+        f"ohlcv:{provider.strip().lower()}:{market.strip().lower()}:"
+        f"{normalize_ticker(ticker)}:{timeframe.strip().lower()}:"
+        f"adjust={int(bool(adjust))}"
     )
 
 
@@ -68,6 +71,7 @@ class SQLiteHistoryCache:
             """
             CREATE TABLE IF NOT EXISTS ohlcv_history_cache (
                 cache_key TEXT PRIMARY KEY,
+                provider TEXT NOT NULL,
                 symbol TEXT NOT NULL,
                 market TEXT NOT NULL,
                 timeframe TEXT NOT NULL,
@@ -88,11 +92,14 @@ class SQLiteHistoryCache:
         adjusted: bool = False,
         fetched_at: datetime | None = None,
         cache_key: str | None = None,
+        provider: str = "unknown",
     ) -> CacheRecord:
         fetched_at = fetched_at or utc_now()
         if fetched_at.tzinfo is None:
             fetched_at = fetched_at.replace(tzinfo=timezone.utc)
+        provider = provider.strip().lower()
         key = cache_key or make_history_cache_key(
+            provider,
             series.symbol.market,
             series.symbol.ticker,
             series.timeframe,
@@ -115,9 +122,9 @@ class SQLiteHistoryCache:
         self._conn.execute(
             """
             INSERT INTO ohlcv_history_cache
-                (cache_key, symbol, market, timeframe, adjusted, payload,
+                (cache_key, provider, symbol, market, timeframe, adjusted, payload,
                  fetched_at, last_candle_at, last_error)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
             ON CONFLICT(cache_key) DO UPDATE SET
                 payload=excluded.payload,
                 fetched_at=excluded.fetched_at,
@@ -126,6 +133,7 @@ class SQLiteHistoryCache:
             """,
             (
                 key,
+                provider,
                 series.symbol.ticker,
                 series.symbol.market,
                 series.timeframe,
@@ -138,6 +146,7 @@ class SQLiteHistoryCache:
         self._conn.commit()
         return CacheRecord(
             key=key,
+            provider=provider,
             series=series,
             fetched_at=fetched_at,
             last_candle_at=last_candle_at,
@@ -146,7 +155,7 @@ class SQLiteHistoryCache:
     def load(self, key: str) -> CacheRecord | None:
         row = self._conn.execute(
             """
-            SELECT cache_key, symbol, market, timeframe, payload,
+            SELECT cache_key, provider, symbol, market, timeframe, payload,
                    fetched_at, last_candle_at, last_error
             FROM ohlcv_history_cache
             WHERE cache_key=?
@@ -156,7 +165,7 @@ class SQLiteHistoryCache:
         if row is None:
             return None
 
-        raw = json.loads(row[4])
+        raw = json.loads(row[5])
         candles = [
             Candle(
                 timestamp=datetime.fromisoformat(item["timestamp"]),
@@ -168,20 +177,21 @@ class SQLiteHistoryCache:
             )
             for item in raw
         ]
-        fetched_at = datetime.fromisoformat(row[5])
+        fetched_at = datetime.fromisoformat(row[6])
         if fetched_at.tzinfo is None:
             fetched_at = fetched_at.replace(tzinfo=timezone.utc)
         last_candle_at = (
-            datetime.fromisoformat(row[6]) if row[6] else None
+            datetime.fromisoformat(row[7]) if row[7] else None
         )
-        symbol = Symbol(ticker=row[1], market=row[2])
-        series = OHLCVSeries(symbol=symbol, timeframe=row[3], candles=candles)
+        symbol = Symbol(ticker=row[2], market=row[3])
+        series = OHLCVSeries(symbol=symbol, timeframe=row[4], candles=candles)
         return CacheRecord(
             key=row[0],
+            provider=row[1],
             series=series,
             fetched_at=fetched_at,
             last_candle_at=last_candle_at,
-            last_error=row[7],
+            last_error=row[8],
         )
 
     def mark_error(self, key: str, error: str) -> None:
@@ -191,11 +201,25 @@ class SQLiteHistoryCache:
         )
         self._conn.commit()
 
-    def keys(self, market: str | None = None) -> list[str]:
-        if market:
+    def keys(
+        self,
+        market: str | None = None,
+        provider: str | None = None,
+    ) -> list[str]:
+        if market and provider:
+            rows = self._conn.execute(
+                "SELECT cache_key FROM ohlcv_history_cache WHERE market=? AND provider=? ORDER BY cache_key",
+                (market, provider),
+            ).fetchall()
+        elif market:
             rows = self._conn.execute(
                 "SELECT cache_key FROM ohlcv_history_cache WHERE market=? ORDER BY cache_key",
                 (market,),
+            ).fetchall()
+        elif provider:
+            rows = self._conn.execute(
+                "SELECT cache_key FROM ohlcv_history_cache WHERE provider=? ORDER BY cache_key",
+                (provider,),
             ).fetchall()
         else:
             rows = self._conn.execute(
