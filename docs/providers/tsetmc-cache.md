@@ -9,11 +9,11 @@ Cache-aside و refresh policy جدید بین Provider و Pipeline قرار می
 
 فرمت canonical:
 
-    ohlcv:{market}:{ticker}:{timeframe}:adjust={0|1}
+    ohlcv:{provider}:{market}:{ticker}:{timeframe}:adjust={0|1}
 
 نمونه:
 
-    ohlcv:stock:فملی:1d:adjust=0
+    ohlcv:tsetmc:stock:فملی:1d:adjust=0
 
 limit عمداً در key نیست. یک cache entry می‌تواند داده بیشتری از درخواست فعلی داشته باشد و در درخواست‌های کوچک‌تر trim شود.
 
