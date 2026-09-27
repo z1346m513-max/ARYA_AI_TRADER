@@ -1,6 +1,6 @@
 [project]
 name = "arya-ai-trader"
-version = "0.1.0-milestone1"
+version = "0.1.0.dev1"
 description = "ARYA AI Trader - Enterprise-grade multi-market technical/fundamental/AI analysis platform"
 requires-python = ">=3.10"
 dependencies = [

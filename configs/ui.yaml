@@ -1,6 +1,11 @@
 theme:
   mode: "dark"          # dark | light
-  accent_color: "#2E86DE"
+  accent_color: "#32C6B0" # teal: primary interactive accent
+  secondary_color: "#6C9EFF"
+  positive_color: "#43D19E"
+  negative_color: "#FF7185"
+  surface_color: "#121E31"
+  background_color: "#0B1220"
   font_family: "Vazirmatn"
   font_size: 11
   rtl: true
