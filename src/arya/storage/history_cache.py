@@ -83,7 +83,26 @@ class SQLiteHistoryCache:
             )
             """
         )
+        self._migrate_schema()
         self._conn.commit()
+
+    def _migrate_schema(self) -> None:
+        columns = {
+            row[1]
+            for row in self._conn.execute(
+                "PRAGMA table_info(ohlcv_history_cache)"
+            ).fetchall()
+        }
+        if not columns:
+            return
+        # Older smart-cache builds had no provider column. Add a neutral
+        # legacy provider so existing installations remain readable; their
+        # keys will be refreshed under the new provider-scoped key on demand.
+        if "provider" not in columns:
+            self._conn.execute(
+                "ALTER TABLE ohlcv_history_cache "
+                "ADD COLUMN provider TEXT NOT NULL DEFAULT 'legacy'"
+            )
 
     def save(
         self,
