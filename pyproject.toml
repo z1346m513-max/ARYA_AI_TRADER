@@ -1,6 +1,6 @@
 [project]
 name = "arya-ai-trader"
-version = "0.1.0-milestone1"
+version = "0.1.0.dev1"
 description = "ARYA AI Trader - Enterprise-grade multi-market technical/fundamental/AI analysis platform"
 requires-python = ">=3.10"
 dependencies = [
@@ -9,6 +9,7 @@ dependencies = [
     "pyyaml>=6.0",
     "pydantic>=2.0",
     "rich>=13.0",
+    "pytse-client==0.19.1",
 ]
 
 [project.optional-dependencies]

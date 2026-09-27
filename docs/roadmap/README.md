@@ -13,8 +13,9 @@
 - CLI کامل (`arya analyze / list-symbols / scan`)
 - تست‌های واحد برای Provider، اندیکاتورها و کل پایپ‌لاین
 
-## 🔜 Milestone 2 — Providerهای واقعی + بخش‌های تحلیلی بیشتر
-- اتصال TSETMC (بورس ایران) و Binance (کریپتو)
+## 🚧 Milestone 2 — Providerهای واقعی + بخش‌های تحلیلی بیشتر
+- اتصال TSETMC (بورس ایران) با `pytse-client==0.19.1` ✅
+- اتصال Binance (کریپتو)
 - Analyzer برای بنیادی، اخبار، کدال، اسمارت‌مانی، جریان نقدینگی
 - الگوهای قیمتی (`technical/patterns`) و استراتژی‌های ترکیبی (`technical/strategies`)
 - Watchlist، Alerts چندکاناله (درون‌برنامه/ایمیل)
