@@ -31,8 +31,14 @@ class RuleBasedDecisionEngine:
         overall_confidence: float,
         section_scores: list[SectionScore],
         language: str = "fa",
+        buy_threshold: float | None = None,
+        sell_threshold: float | None = None,
     ) -> Decision:
         reasons: list[str] = []
+        buy_threshold = self.BUY_THRESHOLD if buy_threshold is None else float(buy_threshold)
+        sell_threshold = self.SELL_THRESHOLD if sell_threshold is None else float(sell_threshold)
+        if sell_threshold >= buy_threshold:
+            raise ValueError("sell_threshold must be lower than buy_threshold")
 
         for section in section_scores:
             if abs(section.score) < 0.1:
@@ -55,14 +61,14 @@ class RuleBasedDecisionEngine:
                     f"و اطمینان {section.confidence:.2f} می‌دهد."
                 )
 
-        if overall_score >= self.BUY_THRESHOLD:
+        if overall_score >= buy_threshold:
             reasons.append(
                 f"Overall score ({overall_score:.2f}) "
                 f"{'is above the buy threshold.' if language == 'en' else 'بالاتر از آستانه خرید است.'}"
                 if language == "en"
                 else f"امتیاز کلی ({overall_score:.2f}) بالاتر از آستانه خرید است."
             )
-        elif overall_score <= self.SELL_THRESHOLD:
+        elif overall_score <= sell_threshold:
             reasons.append(
                 f"Overall score ({overall_score:.2f}) is below the sell threshold."
                 if language == "en"
