@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import arya.technical.indicators.trend.moving_average  # noqa: F401
-import arya.technical.indicators.momentum.rsi  # noqa: F401
 import arya.technical.indicators.momentum.macd  # noqa: F401
+import arya.technical.indicators.momentum.rsi  # noqa: F401
+import arya.technical.indicators.trend.moving_average  # noqa: F401
 import arya.technical.indicators.volatility.bollinger  # noqa: F401
 import arya.technical.indicators.volume.obv  # noqa: F401
 from arya.technical.indicators.base import IndicatorRegistry

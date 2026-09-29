@@ -42,7 +42,7 @@ class Settings:
     ui: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def load(cls, config_dir: str | Path | None = None) -> "Settings":
+    def load(cls, config_dir: str | Path | None = None) -> Settings:
         base = Path(config_dir) if config_dir else DEFAULT_CONFIG_DIR
         if not base.exists():
             raise ConfigError(f"مسیر تنظیمات پیدا نشد: {base}")

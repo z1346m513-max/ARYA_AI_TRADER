@@ -12,15 +12,15 @@ from __future__ import annotations
 
 import logging
 
+import arya.providers.market.mock_provider  # noqa: F401  (ثبت درایور "mock")
+from arya.ai.reasoning.decision_engine import RuleBasedDecisionEngine
 from arya.analysis.analyzers.technical_analyzer import TechnicalAnalyzer
 from arya.analysis.recommendation.recommendation_engine import RecommendationEngine
 from arya.analysis.scoring.scoring_engine import ScoringEngine
-from arya.ai.reasoning.decision_engine import RuleBasedDecisionEngine
 from arya.config.settings import Settings
 from arya.models.analysis_result import Recommendation
 from arya.models.market_data import Symbol
 from arya.providers.base import ProviderRegistry
-import arya.providers.market.mock_provider  # noqa: F401  (ثبت درایور "mock")
 from arya.risk.risk_manager import RiskManager
 from arya.storage.cache import OHLCVStore
 from arya.technical.indicator_engine import IndicatorEngine

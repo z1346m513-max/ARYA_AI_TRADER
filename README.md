@@ -3,9 +3,14 @@
 پلتفرم تحلیل چندبازاره (بورس ایران، ارز دیجیتال، فارکس) با معماری Enterprise،
 موتور امتیازدهی وزن‌دار، موتور تصمیم‌گیری هوش مصنوعی و مدیریت ریسک.
 
-> **وضعیت فعلی: Milestone 1 — Core Pipeline**
-> پایپ‌لاین اصلی کامل و اجراشدنی است (با داده‌ی Mock). GUI با PySide6،
-> اتصال Providerهای واقعی، بک‌تست و نصب‌کننده‌ی ویندوز در نقشه راه (`docs/roadmap`) هستند.
+> **وضعیت فعلی: Milestone 1 — Core Pipeline + Backtest**
+> پایپ‌لاین اصلی کامل و اجراشدنی است (با داده‌ی Mock). موتور بک‌تست تکرارپذیر با
+> گیت ریسک اضافه شد. GUI با PySide6، اتصال Providerهای واقعی و نصب‌کننده‌ی
+> ویندوز در نقشه راه (`docs/roadmap`) هستند.
+>
+> **هشدار معاملاتی:** بک‌تست فقط برای ارزیابی استراتژی است و عملکرد گذشته تضمین‌کنندهٔ
+> عملکرد آینده نیست. این سیستم فعلاً فقط paper trading را پشتیبانی می‌کند و هیچ اتصال
+> کارگزاری یا معاملهٔ واقعی ندارد.
 
 ## معماری کلی
 
@@ -52,6 +57,31 @@ PYTHONPATH=src python -m arya.cli.main analyze --ticker BTCUSDT --market crypto
 pip install -e ".[dev]"
 pytest tests/ -v
 ```
+
+## بک‌تست
+
+موتور بک‌تست تکرارپذیر با کارمزد، اسلیپیج، تأخیر یک کندلی و گیت ریسک اجباری:
+
+```bash
+PYTHONPATH=src python -c "
+from arya.providers.market.mock_provider import MockMarketProvider
+from arya.models.market_data import Symbol
+from arya.backtest import BacktestEngine, BacktestConfig, MovingAverageCrossover
+
+provider = MockMarketProvider(market='stock')
+symbol = Symbol(ticker='FOOLAD', market='stock')
+series = provider.fetch_ohlcv(symbol, timeframe='1d', limit=200)
+df = series.to_dataframe()
+
+engine = BacktestEngine(BacktestConfig())
+result = engine.run(df, MovingAverageCrossover(), symbol='FOOLAD')
+print(f'بازده: {result.metrics.total_return_pct:.2f}%')
+print(f'حداکثر افت: {result.metrics.max_drawdown_pct:.2f}%')
+print(f'شارپ: {result.metrics.sharpe_ratio:.2f}')
+"
+```
+
+راهنمای کامل در [`docs/backtesting.md`](docs/backtesting.md).
 
 ## تنظیمات
 

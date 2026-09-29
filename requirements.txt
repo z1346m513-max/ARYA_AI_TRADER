@@ -5,4 +5,6 @@ pydantic>=2.0
 rich>=13.0
 pytest>=7.0
 pytest-cov
+ruff>=0.4
+mypy>=1.10
 # Optional GUI layer (install separately: pip install -r requirements-gui.txt)

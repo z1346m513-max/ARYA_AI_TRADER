@@ -10,3 +10,5 @@ data/reports/*
 data/exports/*
 !data/**/.gitkeep
 .DS_Store
+.coverage
+coverage.xml
