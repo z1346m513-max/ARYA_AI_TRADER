@@ -10,11 +10,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import Protocol
 
 import pandas as pd
 
-from arya.backtest.models import Signal, Side
+from arya.backtest.models import Side, Signal
 
 
 class Strategy(Protocol):
@@ -80,8 +81,6 @@ class MovingAverageCrossover(BaseStrategy):
         fast_sma = df["close"].rolling(window=self.fast_period).mean()
         slow_sma = df["close"].rolling(window=self.slow_period).mean()
 
-        timestamps = df.index if not isinstance(df.index, pd.RangeIndex) else range(len(df))
-
         signals: list[Signal] = []
         prev_fast = prev_slow = None
 
@@ -119,7 +118,7 @@ class MovingAverageCrossover(BaseStrategy):
         return signals
 
     @staticmethod
-    def _get_timestamp(df: pd.DataFrame, idx: int) -> "datetime":
+    def _get_timestamp(df: pd.DataFrame, idx: int) -> datetime:
         """دریافت timestamp از اندیس دیتافریم."""
         from datetime import datetime
         ts = df.index[idx]
@@ -153,7 +152,6 @@ class MomentumStrategy(BaseStrategy):
 
         close = df["close"]
         returns = close.pct_change(self.lookback)
-        timestamps = df.index
 
         signals: list[Signal] = []
         for i in range(self.lookback, len(df)):
@@ -168,7 +166,7 @@ class MomentumStrategy(BaseStrategy):
         return signals
 
     @staticmethod
-    def _get_timestamp(df: pd.DataFrame, idx: int) -> "datetime":
+    def _get_timestamp(df: pd.DataFrame, idx: int) -> datetime:
         from datetime import datetime
         ts = df.index[idx]
         if isinstance(ts, datetime):

@@ -104,8 +104,8 @@ class BacktestRiskGate:
 
     def check(
         self,
-        order: "Any",
-        position: "Any",
+        order: Any,
+        position: Any,
         equity: float,
         close_price: float,
     ) -> tuple[bool, str | None, float]:

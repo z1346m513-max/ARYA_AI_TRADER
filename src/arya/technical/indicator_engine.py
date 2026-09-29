@@ -12,10 +12,11 @@ import logging
 
 import pandas as pd
 
+import arya.technical.indicators.momentum.macd  # noqa: F401
+import arya.technical.indicators.momentum.rsi  # noqa: F401
+
 # Import کردن ماژول‌های اندیکاتور تا دکوریتورهای @register اجرا و در رجیستری ثبت شوند.
 import arya.technical.indicators.trend.moving_average  # noqa: F401
-import arya.technical.indicators.momentum.rsi  # noqa: F401
-import arya.technical.indicators.momentum.macd  # noqa: F401
 import arya.technical.indicators.volatility.bollinger  # noqa: F401
 import arya.technical.indicators.volume.obv  # noqa: F401
 from arya.config.settings import Settings

@@ -26,7 +26,7 @@ from arya.backtest.models import (
     Signal,
     Trade,
 )
-from arya.backtest.strategies import MovingAverageCrossover, MomentumStrategy, Strategy
+from arya.backtest.strategies import MomentumStrategy, MovingAverageCrossover, Strategy
 
 __all__ = [
     "BacktestConfig",

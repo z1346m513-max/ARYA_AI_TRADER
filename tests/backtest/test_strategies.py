@@ -1,12 +1,13 @@
 """تست‌های استراتژی‌های خط پایه: تولید سیگنال و عدم استفاده از دادهٔ آینده."""
 from __future__ import annotations
 
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 import pytest
-from datetime import datetime, timedelta
 
-from arya.backtest import MovingAverageCrossover, MomentumStrategy
+from arya.backtest import MomentumStrategy, MovingAverageCrossover
 from arya.backtest.models import Side
 
 

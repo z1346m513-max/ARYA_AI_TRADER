@@ -1,13 +1,13 @@
 """تست‌های موتور بک‌تست: تکرارپذیری، هزینه، تأخیر و گیت ریسک."""
 from __future__ import annotations
 
+from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 import pytest
-from datetime import datetime, timedelta
 
-from arya.backtest import BacktestConfig, BacktestEngine, MovingAverageCrossover, MomentumStrategy
-from arya.backtest.models import Side
+from arya.backtest import BacktestConfig, BacktestEngine, MomentumStrategy, MovingAverageCrossover
 
 
 class TestBacktestConfig:
@@ -87,7 +87,7 @@ class TestBacktestEngine:
 
         # اگر look-ahead bias وجود داشته باشد، قیمت اجرا = قیمت بسته شدن همان کندل است
         # با تأخیر، قیمت اجرا = قیمت باز شدن کندل بعدی
-        for fill in result.fills:
+        for _fill in result.fills:
             # قیمت اجرا نباید برابر قیمت بسته شدن کندل سیگنال باشد
             # (مگر در موارد خاص، ولی در این داده جهشی نباید اتفاق بیفتد)
             pass

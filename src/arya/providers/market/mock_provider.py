@@ -15,7 +15,6 @@ import numpy as np
 from arya.models.market_data import Candle, OHLCVSeries, Symbol
 from arya.providers.base import MarketDataProvider, ProviderRegistry
 
-
 _SAMPLE_SYMBOLS = {
     "stock": [("FOOLAD", "فولاد مبارکه"), ("SHASTA", "پتروشیمی شازند")],
     "crypto": [("BTCUSDT", "Bitcoin"), ("ETHUSDT", "Ethereum")],
