@@ -1,0 +1,37 @@
+name: ARYA Governance Gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify mandatory governance files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f AGENTS.md
+          test -f docs/governance/PLATFORM_CONSTITUTION.md
+          test -f docs/governance/STARTUP_CHECKLIST.md
+          test -f docs/governance/CHANGE_LEDGER.md
+          test -f .github/CODEOWNERS
+          test -f .github/pull_request_template.md
+          test -f skills/arya-platform-governance/SKILL.md
+      - name: Validate change record naming
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in docs/changes/*.md; do
+            [ -f "$f" ] || continue
+            basename "$f" | grep -Eq '^CR-[0-9]{8}-[0-9]{3}\.md$' || {
+              echo "Invalid Change Record filename: $f"
+              exit 1
+            }
+          done
+      - name: Python syntax check
+        run: |
+          python -m compileall -q src tests
