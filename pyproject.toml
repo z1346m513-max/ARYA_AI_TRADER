@@ -1,7 +1,7 @@
 [project]
 name = "arya-ai-trader"
-version = "0.1.0-milestone1"
-description = "ARYA AI Trader - Enterprise-grade multi-market technical/fundamental/AI analysis platform"
+version = "0.1.0+milestone1"
+description = "ARYA AI Trader - multi-market technical/fundamental/AI analysis platform"
 requires-python = ">=3.10"
 dependencies = [
     "pandas>=2.0",

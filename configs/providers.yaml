@@ -1,11 +1,14 @@
-# تعریف Providerهای داده. در Milestone 1 فقط mock فعال است.
-# اتصال به Providerهای واقعی (TSETMC, Codal, Binance, ...) در فازهای بعدی اضافه می‌شود.
+# تعریف Providerهای داده. فاز اول با TSETMC برای بورس ایران اجرا می‌شود.
+# mock همچنان برای تست آفلاین و توسعه بدون شبکه در دسترس است.
 
 market:
   stock:
-    driver: "mock"        # mock | tsetmc | ...
+    driver: "tsetmc"      # mock | tsetmc | ...
     enabled: true
     rate_limit_per_min: 60
+    timeout_seconds: 15
+    retries: 3
+    base_url: "https://cdn.tsetmc.com"
 
   crypto:
     driver: "mock"        # mock | binance | ...

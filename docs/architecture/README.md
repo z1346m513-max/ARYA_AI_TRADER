@@ -26,9 +26,11 @@
 `MarketDataProvider` (`providers/base.py`) را پیاده‌سازی و با
 `@ProviderRegistry.register("driver_name")` خودش را معرفی می‌کند.
 درایور فعال هر بازار در `configs/providers.yaml` تعیین می‌شود.
-در Milestone 1 فقط `MockMarketProvider` وجود دارد؛ اتصال‌های واقعی
-(TSETMC برای بورس، Binance برای کریپتو، Codal، خبرگزاری‌ها) در Milestone 2 اضافه می‌شوند
-بدون نیاز به تغییر لایه‌های بالادست.
+`MockMarketProvider` برای تست آفلاین باقی مانده و `TsetmcMarketProvider` برای
+دادهٔ روزانهٔ بورس ایران در فاز اول فعال است. اتصال‌های واقعی بعدی (Binance،
+Codal و خبرگزاری‌ها) باید همین قرارداد را رعایت کنند و بدون تغییر لایه‌های
+بالادست اضافه شوند. Provider TSETMC دارای timeout/retry، User-Agent و تشخیص
+پاسخ نامعتبر است؛ دادهٔ دریافت‌شده باید در لایهٔ Storage ثبت شود.
 
 ### Storage (`src/arya/storage/`)
 کش کردن داده‌ی دریافتی (فعلاً SQLite سبک) تا فراخوانی مکرر Provider لازم نباشد.

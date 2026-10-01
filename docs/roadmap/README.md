@@ -1,6 +1,6 @@
 # نقشه راه ARYA AI Trader
 
-## ✅ Milestone 1 — Core Pipeline (فعلی)
+## ✅ Milestone 1 — Core Pipeline + TSETMC foundation (فعلی)
 - ساختار کامل پروژه طبق معماری تأییدشده
 - `Settings` مرکزی + ۶ فایل YAML کاملاً کاربردی
 - `MockMarketProvider` (داده‌ی مصنوعی Deterministic برای توسعه/تست آفلاین)
@@ -12,9 +12,12 @@
 - `RecommendationEngine` + Dashboard متنی (rich)
 - CLI کامل (`arya analyze / list-symbols / scan`)
 - تست‌های واحد برای Provider، اندیکاتورها و کل پایپ‌لاین
+- Provider قابل‌تنظیم TSETMC برای جست‌وجوی نماد و تاریخچهٔ روزانهٔ بورس ایران
+- timeout/retry و تست آفلاین Provider برای جلوگیری از وابستگی تست‌ها به شبکه
 
-## 🔜 Milestone 2 — Providerهای واقعی + بخش‌های تحلیلی بیشتر
-- اتصال TSETMC (بورس ایران) و Binance (کریپتو)
+## 🔜 Milestone 2 — پلتفرم عملیاتی داده و تحلیل
+- تکمیل جریان آنلاین بورس ایران: market watch، تازگی داده، rate limit، پایش و fallback
+- اتصال Binance (کریپتو) و providerهای فارکس/سهام خارجی
 - Analyzer برای بنیادی، اخبار، کدال، اسمارت‌مانی، جریان نقدینگی
 - الگوهای قیمتی (`technical/patterns`) و استراتژی‌های ترکیبی (`technical/strategies`)
 - Watchlist، Alerts چندکاناله (درون‌برنامه/ایمیل)
@@ -40,3 +43,5 @@
 - سیستم پروفایل ریسک کاربر + Import/Export تنظیمات
 - مقایسه هم‌زمان چند نماد
 - مدیریت چند کاربره (در صورت نیاز)
+
+> مالیات و قابلیت‌های مالیاتی در محدودهٔ این پروژه نیستند.

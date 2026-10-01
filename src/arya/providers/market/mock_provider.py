@@ -8,7 +8,7 @@ Deterministic (بر اساس seed) است تا تست‌ها Reproducible بما
 from __future__ import annotations
 
 import math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import numpy as np
 
@@ -52,7 +52,7 @@ class MockMarketProvider(MarketDataProvider):
             shock = local_rng.normal(loc=drift, scale=1.2)
             prices.append(max(1.0, prices[-1] + shock))
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         candles: list[Candle] = []
         for i, close in enumerate(prices):
             open_ = prices[i - 1] if i > 0 else close

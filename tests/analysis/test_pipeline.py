@@ -11,6 +11,10 @@ from arya.models.analysis_result import Action
 @pytest.fixture
 def app(tmp_path, monkeypatch):
     settings = Settings.load()
+    # تست‌های پایپ‌لاین باید deterministic و مستقل از شبکه باشند؛
+    # اجرای واقعی TSETMC در تست اتصال provider جداگانه انجام می‌شود.
+    settings.providers["market"]["stock"]["driver"] = "mock"
+    settings.providers["market"]["crypto"]["driver"] = "mock"
     # اجرای تست‌ها روی یک دیتابیس موقت تا فایل واقعی پروژه دست‌نخورده بماند
     settings.app["storage"]["path"] = str(tmp_path / "test_arya.db")
     return AryaApp(settings=settings)

@@ -21,6 +21,7 @@ from arya.models.analysis_result import Recommendation
 from arya.models.market_data import Symbol
 from arya.providers.base import ProviderRegistry
 import arya.providers.market.mock_provider  # noqa: F401  (ثبت درایور "mock")
+import arya.providers.market.tsetmc_provider  # noqa: F401  (ثبت درایور "tsetmc")
 from arya.risk.risk_manager import RiskManager
 from arya.storage.cache import OHLCVStore
 from arya.technical.indicator_engine import IndicatorEngine
@@ -53,7 +54,12 @@ class AryaApp:
     def _provider_for_market(self, market: str):
         cfg = self.settings.provider_for(market)
         driver = cfg.get("driver", "mock")
-        return ProviderRegistry.create(driver, market=market)
+        kwargs = {"market": market}
+        if driver == "tsetmc":
+            for key in ("base_url", "timeout_seconds", "retries", "backoff_seconds"):
+                if key in cfg:
+                    kwargs[{"timeout_seconds": "timeout"}.get(key, key)] = cfg[key]
+        return ProviderRegistry.create(driver, **kwargs)
 
     def analyze_symbol(self, ticker: str, market: str = "stock", timeframe: str = "1d") -> Recommendation:
         """اجرای کامل پایپ‌لاین برای یک نماد و برگرداندن Recommendation نهایی."""
