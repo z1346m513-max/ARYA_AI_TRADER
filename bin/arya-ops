@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+# ARYA Operations launcher
+# Usage: arya-ops sync [worker args...]
+#        arya-ops live [live-check args...]
+#        arya-ops history [smoke-test args...]
+set -Eeuo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export PYTHONPATH="${ROOT_DIR}/src${PYTHONPATH:+:${PYTHONPATH}}"
+PYTHON_BIN="${PYTHON_BIN:-python3}"
+
+usage() {
+  cat <<'EOF'
+ARYA Operations executable
+
+Commands:
+  sync       Run Drive/rclone sync worker (dry-run by default; use --apply)
+  live       Check live TSETMC market-watch feed
+  history    Check historical daily TSETMC feed
+  version    Print launcher and repository version
+  help       Show this help
+
+Examples:
+  ./bin/arya-ops sync --remote drive:arya-phase-one --local-dir data/phase-one
+  ./bin/arya-ops sync --remote drive:arya-phase-one --local-dir data/phase-one --apply
+  ./bin/arya-ops live --ticker فولاد --json
+  ./bin/arya-ops history --ticker فولاد --limit 10 --json
+EOF
+}
+
+case "${1:-help}" in
+  sync)
+    shift
+    exec "${PYTHON_BIN}" "${ROOT_DIR}/scripts/drive_sync_worker.py" "$@"
+    ;;
+  live)
+    shift
+    exec "${PYTHON_BIN}" "${ROOT_DIR}/scripts/tsetmc_live_check.py" "$@"
+    ;;
+  history)
+    shift
+    exec "${PYTHON_BIN}" "${ROOT_DIR}/scripts/live_tsetmc_smoke.py" "$@"
+    ;;
+  version)
+    printf 'arya-ops 0.1.0\nroot: %s\n' "${ROOT_DIR}"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    echo "Unknown command: $1" >&2
+    usage >&2
+    exit 64
+    ;;
+esac
