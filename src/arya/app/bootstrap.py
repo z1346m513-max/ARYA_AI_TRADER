@@ -13,11 +13,13 @@ from __future__ import annotations
 import logging
 
 from arya.analysis.analyzers.technical_analyzer import TechnicalAnalyzer
+from arya.analysis.analyzers.fundamental_analyzer import FundamentalAnalyzer
 from arya.analysis.recommendation.recommendation_engine import RecommendationEngine
 from arya.analysis.scoring.scoring_engine import ScoringEngine
 from arya.ai.reasoning.decision_engine import RuleBasedDecisionEngine
 from arya.config.settings import Settings
 from arya.models.analysis_result import Recommendation
+from arya.models.fundamentals import FundamentalMetrics
 from arya.models.market_data import Symbol
 from arya.providers.base import ProviderRegistry
 import arya.providers.market.mock_provider  # noqa: F401  (ثبت درایور "mock")
@@ -25,6 +27,8 @@ import arya.providers.market.tsetmc_provider  # noqa: F401  (ثبت درایور
 from arya.risk.risk_manager import RiskManager
 from arya.storage.cache import OHLCVStore
 from arya.technical.indicator_engine import IndicatorEngine
+from arya.scanner.filters import MarketFilterConfig, FilterResult, scan_ohlcv
+from arya.technical.strategies.trend_momentum import StrategySignal, trend_momentum_signal
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +43,7 @@ class AryaApp:
         self.store = OHLCVStore(self.settings.app["storage"]["path"])
         self.indicator_engine = IndicatorEngine(self.settings)
         self.technical_analyzer = TechnicalAnalyzer()
+        self.fundamental_analyzer = FundamentalAnalyzer()
         self.scoring_engine = ScoringEngine(self.settings)
         self.decision_engine = RuleBasedDecisionEngine()
         self.risk_manager = RiskManager()
@@ -103,3 +108,22 @@ class AryaApp:
 
     def list_symbols(self, market: str = "stock") -> list[Symbol]:
         return self._provider_for_market(market).list_symbols()
+
+    def evaluate_market_filter(self, ticker: str, market: str = "stock", timeframe: str = "1d") -> FilterResult:
+        """فیلتر کمّی آخرین وضعیت نماد را بدون تولید توصیهٔ معاملاتی برمی‌گرداند."""
+        provider = self._provider_for_market(market)
+        series = provider.fetch_ohlcv(Symbol(ticker=ticker, market=market), timeframe=timeframe, limit=200)
+        cfg = MarketFilterConfig(**self.settings.filters.get("market_watch", {}))
+        return scan_ohlcv(series.to_dataframe(), cfg)
+
+    def evaluate_strategy(self, ticker: str, market: str = "stock", timeframe: str = "1d") -> StrategySignal:
+        """استراتژی قابل توضیح را روی دادهٔ آخر provider اجرا می‌کند."""
+        provider = self._provider_for_market(market)
+        series = provider.fetch_ohlcv(Symbol(ticker=ticker, market=market), timeframe=timeframe, limit=200)
+        cfg = self.settings.filters.get("strategy", {})
+        cfg = {k: v for k, v in cfg.items() if k != "name"}
+        return trend_momentum_signal(series.to_dataframe(), **cfg)
+
+    def analyze_fundamentals(self, metrics: FundamentalMetrics):
+        """تحلیل نسبت‌های بنیادی تزریق‌شده از Codal یا منبع معتبر دیگر."""
+        return self.fundamental_analyzer.analyze(metrics)

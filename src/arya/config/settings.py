@@ -22,6 +22,7 @@ _CONFIG_FILES = {
     "providers": "providers.yaml",
     "scheduler": "scheduler.yaml",
     "ui": "ui.yaml",
+    "filters": "filters.yaml",
 }
 
 
@@ -40,6 +41,7 @@ class Settings:
     providers: dict[str, Any] = field(default_factory=dict)
     scheduler: dict[str, Any] = field(default_factory=dict)
     ui: dict[str, Any] = field(default_factory=dict)
+    filters: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def load(cls, config_dir: str | Path | None = None) -> "Settings":

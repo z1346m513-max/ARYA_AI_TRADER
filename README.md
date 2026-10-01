@@ -73,6 +73,7 @@ pytest tests/ -v
 | `providers.yaml` | انتخاب درایور هر منبع داده (TSETMC برای stock و Mock برای تست) |
 | `scheduler.yaml` | زمان‌بندی به‌روزرسانی خودکار به تفکیک بازار |
 | `ui.yaml` | تم، زبان، ابعاد پنجره‌ها (برای GUI آینده) |
+| `filters.yaml` | آستانه‌های دیده‌بان و پارامترهای استراتژی روند-مومنتوم |
 
 ## نقشه راه
 
@@ -86,6 +87,11 @@ TSETMC استفاده می‌کند. timeout، retry و `base_url` در `configs
 `mock` تغییر دهید. این اتصال فعلاً تاریخچهٔ روزانه (timeframe=`1d`) را پوشش
 می‌دهد و قبل از استفادهٔ عملی باید محدودیت شبکه، نرخ درخواست و کیفیت دادهٔ
 روز جاری در محیط استقرار بررسی شود.
+
+راهنمای اجرای smoke test زنده و همگام‌سازی منابع Drive در
+[`docs/operations/live-data-and-drive-sync.md`](docs/operations/live-data-and-drive-sync.md)
+و راهنمای فیلتر/استراتژی/بنیادی در
+[`docs/strategies/README.md`](docs/strategies/README.md) قرار دارد.
 
 ## لایسنس
 

@@ -1,0 +1,16 @@
+# فیلترهای محافظه‌کارانه؛ آستانه‌ها سیگنال قطعی خرید/فروش نیستند.
+market_watch:
+  min_price_change_pct: -5.0
+  max_price_change_pct: 5.0
+  min_volume_ratio: 1.5
+  min_value: 0
+  min_buyer_power: null
+  require_positive_close: false
+
+strategy:
+  name: trend_momentum
+  fast_period: 20
+  slow_period: 50
+  rsi_period: 14
+  oversold: 30
+  overbought: 70
