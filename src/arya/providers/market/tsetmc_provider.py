@@ -100,6 +100,30 @@ class TsetmcMarketProvider(MarketDataProvider):
                 result.append(Symbol(ticker=ticker, market="stock", name=row.get("lVal30")))
         return result
 
+    def fetch_market_watch(self, ticker: str | None = None) -> list[dict]:
+        """دریافت snapshot بازار؛ برای health-check و داشبورد، نه سفارش‌گذاری."""
+        rows = self._unwrap(self._get_json(self._market_watch_path), "marketwatch")
+        quotes: list[dict] = []
+        for row in rows:
+            symbol = str(row.get("lVal18AFC") or row.get("lVal18") or "").strip()
+            if not symbol or (ticker and symbol != ticker):
+                continue
+            quotes.append(
+                {
+                    "ticker": symbol,
+                    "name": row.get("lVal30"),
+                    "last": self._number(row, "pDrCotVal", "pl", "pClosing"),
+                    "close": self._number(row, "pClosing", "pc"),
+                    "previous_close": self._number(row, "priceYesterday", "py"),
+                    "volume": self._number(row, "qTotTran5J", "zTotTran"),
+                    "value": self._number(row, "qTotCap", "qTotCap"),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+        if ticker and not quotes:
+            raise TsetmcProviderError(f"نماد در market-watch پیدا نشد: {ticker}")
+        return quotes
+
     def _resolve_instrument(self, ticker: str) -> tuple[str, str | None]:
         rows = self._unwrap(self._get_json(f"/api/Instrument/GetInstrumentSearch/{quote(ticker)}"), "instrumentSearch")
         for row in rows:

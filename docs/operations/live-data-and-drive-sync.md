@@ -32,6 +32,30 @@
 Service Account مناسب‌تر است. توکن و client secret باید فقط در secret store
 محیط عملیاتی نگه‌داری شوند.
 
+### Worker پایتونی
+
+برای اجرای قابل‌ردیابی sync و پردازش فایل‌ها از `scripts/drive_sync_worker.py`
+استفاده کنید. حالت پیش‌فرض dry-run است:
+
+```bash
+PYTHONPATH=src python scripts/drive_sync_worker.py \
+  --remote drive:arya-phase-one \
+  --local-dir data/phase-one
+```
+
+پس از بررسی log، اجرای واقعی را با `--apply` انجام دهید:
+
+```bash
+PYTHONPATH=src python scripts/drive_sync_worker.py \
+  --remote drive:arya-phase-one \
+  --local-dir data/phase-one \
+  --apply
+```
+
+Worker فایل‌های مجاز را با SHA-256 در `manifest.json` ثبت می‌کند، JSON/CSV را
+به‌صورت سبک بررسی می‌کند و PDF/XLSX را برای استخراج امن بعدی در صف metadata
+قرار می‌دهد. فایل‌های خارج از allowlist یا بزرگ‌تر از سقف، rejected می‌شوند.
+
 ## ۲) تست‌های اتصال زنده به بورس ایران
 
 تست‌های واحد پروژه عمداً Mock هستند و نباید به بازار زنده وابسته شوند. تست زنده
@@ -41,6 +65,17 @@ Service Account مناسب‌تر است. توکن و client secret باید ف�
 PYTHONPATH=src python scripts/live_tsetmc_smoke.py \
   --ticker فولاد --limit 10 --json
 ```
+
+برای بررسی مستقیم snapshot لحظه‌ای market-watch نیز اجرا کنید:
+
+```bash
+PYTHONPATH=src python scripts/tsetmc_live_check.py \
+  --ticker فولاد --json
+```
+
+این فرمان تعداد quoteهای دریافتی، quote معتبر، قیمت آخر، قیمت پایانی، حجم و
+زمان بررسی را گزارش می‌کند. خروجی فقط health-check است و به هیچ مسیر سفارش‌گذاری
+متصل نیست.
 
 این تست موارد زیر را کنترل می‌کند:
 

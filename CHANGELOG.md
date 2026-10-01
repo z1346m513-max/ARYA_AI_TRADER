@@ -20,6 +20,13 @@
 ### Design
 - دادهٔ بنیادی ناقص امتیاز مثبت جعلی تولید نمی‌کند و دادهٔ جریان پول بدون provider معتبر وارد سیگنال نمی‌شود.
 
+## [Unreleased] — عملیات همگام‌سازی و feed زنده
+### Added
+- `drive_sync_worker.py` برای dry-run/apply، allowlist فایل، SHA-256 manifest و پردازش سبک JSON/CSV.
+- `tsetmc_live_check.py` برای snapshot market-watch، شمارش quote معتبر و اعلام وضعیت feed.
+- API `fetch_market_watch` در provider TSETMC؛ بدون اتصال به مسیر سفارش‌گذاری.
+- تست‌های آفلاین worker و market-watch؛ مجموع تست‌های پروژه به ۲۲ رسید.
+
 ## [0.1.0-milestone1] - 2026-07-17
 ### Added
 - ساختار کامل پروژه طبق معماری تأییدشده (docs, configs, src/arya/*, tests, installer)
