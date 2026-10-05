@@ -1,28 +1,24 @@
-# تعریف Providerهای داده. فاز اول با TSETMC برای بورس ایران اجرا می‌شود.
-# mock همچنان برای تست آفلاین و توسعه بدون شبکه در دسترس است.
+# فقط بورس ایران + کدال
 
 market:
   stock:
-    driver: "tsetmc"      # mock | tsetmc | ...
+    driver: "tsetmc"      # mock | tsetmc
     enabled: true
+    display_name: "بورس ایران"
+    currency: "IRR"
     rate_limit_per_min: 60
     timeout_seconds: 15
     retries: 3
     base_url: "https://cdn.tsetmc.com"
 
-  crypto:
-    driver: "mock"        # mock | binance | ...
-    enabled: true
-    rate_limit_per_min: 1200
-
-  forex:
-    driver: "mock"        # mock | oanda | ...
-    enabled: false
-    rate_limit_per_min: 60
-
 codal:
-  driver: "mock"
-  enabled: false
+  driver: "codal"
+  enabled: true
+  base_url: "https://search.codal.ir/api/search"
+  timeout_seconds: 20
+  retries: 3
+  backoff_seconds: 1.0
+  min_interval_seconds: 1.0
 
 news:
   driver: "mock"
