@@ -1,12 +1,12 @@
 """
-CLI — بورس ایران + کدال + سهامداران + Cache-First + Symbol Master.
+CLI — بورس ایران + کدال + سهامداران + حقیقی/حقوقی + Cache + Symbol Master.
 
 نمونه:
     arya analyze --ticker FOOLAD
+    arya codal --symbol فولاد --event capital
+    arya codal --symbol فولاد --event board
     arya shareholders --changes
-    arya shareholders --ticker فولاد
-    arya codal --symbol فولاد
-    arya list-industries
+    arya client-type --ticker فولاد
     arya cache-stats
 """
 from __future__ import annotations
@@ -20,11 +20,12 @@ from arya.app.bootstrap import AryaApp
 from arya.dashboard.console_dashboard import render_recommendation
 from arya.cli.codal_command import register_codal_parser, run_codal
 from arya.cli.shareholder_command import register_shareholder_parser, run_shareholders
+from arya.cli.client_type_command import register_client_type_parser, run_client_type
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="arya", description="ARYA AI Trader — بورس ایران، کدال و سهامداران"
+        prog="arya", description="ARYA AI Trader — بورس ایران"
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -39,7 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
     list_p.add_argument("--industry", default=None)
     list_p.add_argument("--from-master", action="store_true")
 
-    sub.add_parser("list-industries", help="لیست صنایع Symbol Master")
+    sub.add_parser("list-industries", help="لیست صنایع")
 
     scan_p = sub.add_parser("scan", help="اسکن نمادها")
     scan_p.add_argument("--market", default="stock", choices=["stock"])
@@ -48,10 +49,11 @@ def build_parser() -> argparse.ArgumentParser:
     scan_p.add_argument("--industry", default=None)
     scan_p.add_argument("--limit", type=int, default=0)
 
-    sub.add_parser("cache-stats", help="نمایش hit-ratio کش")
+    sub.add_parser("cache-stats", help="hit-ratio کش")
 
     register_codal_parser(sub)
     register_shareholder_parser(sub)
+    register_client_type_parser(sub)
     return parser
 
 
@@ -64,6 +66,8 @@ def main(argv: list[str] | None = None) -> int:
         return run_codal(args, console)
     if args.command == "shareholders":
         return run_shareholders(args, console)
+    if args.command == "client-type":
+        return run_client_type(args, console)
 
     app = AryaApp()
 
