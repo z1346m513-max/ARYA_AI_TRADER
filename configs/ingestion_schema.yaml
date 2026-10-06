@@ -1,0 +1,107 @@
+# قرارداد schema داده‌ی بازار برای لایه‌ی data_ingestion
+# --------------------------------------------------------
+# این فایل تعریف رسمی ستون‌های فایل‌های Excel/CSV بازار است.
+# تمام فایل‌های ورودی باید با این schema مطابقت داشته باشند.
+
+schema_version: "market-v1"
+
+# ستون‌های الزامی - بدون این ستون‌ها فایل رد می‌شود
+required_columns:
+  - name: timestamp
+    type: datetime
+    description: "زمان کندل (ISO 8601، ترجیحاً timezone-aware)"
+    example: "2026-10-06T10:00:00+03:30"
+
+  - name: symbol
+    type: string
+    description: "نماد معاملاتی (مثلاً فولاد، خگستر، BTCUSDT)"
+    example: "فولاد"
+
+  - name: open
+    type: float
+    description: "قیمت باز شدن"
+    constraint: "بزرگتر از صفر"
+
+  - name: high
+    type: float
+    description: "بالاترین قیمت"
+    constraint: ">= max(open, close)"
+
+  - name: low
+    type: float
+    description: "پایین‌ترین قیمت"
+    constraint: "<= min(open, close)"
+
+  - name: close
+    type: float
+    description: "قیمت بسته شدن"
+    constraint: "بزرگتر از صفر"
+
+  - name: volume
+    type: float
+    description: "حجم معاملات"
+    constraint: ">= 0"
+
+# ستون‌های اختیاری - اگر وجود نداشته باشند، مقدار پیش‌فرض استفاده می‌شود
+optional_columns:
+  - name: value
+    type: float
+    default: 0.0
+    description: "ارزش معاملات (تومان/ریال)"
+
+  - name: currency
+    type: string
+    default: "IRR"
+    description: "واحد پول"
+
+  - name: market
+    type: string
+    default: "stock"
+    description: "نوع بازار (stock, crypto, forex)"
+
+# قواعد اعتبارسنجی
+validation_rules:
+  - rule: no_missing_required_columns
+    severity: reject
+    description: "تمام ستون‌های الزامی باید وجود داشته باشند"
+
+  - rule: positive_prices
+    severity: error
+    description: "قیمت‌های open, high, low, close باید مثبت باشند"
+
+  - rule: non_negative_volume
+    severity: error
+    description: "حجم نمی‌تواند منفی باشد"
+
+  - rule: ohlc_consistency
+    severity: error
+    description: "high >= max(open, close) و low <= min(open, close)"
+
+  - rule: no_duplicate_rows
+    severity: warning
+    description: "ترکیب (timestamp, symbol) نباید تکراری باشد"
+
+  - rule: chronological_order
+    severity: warning
+    description: "داده باید به ترتیب زمانی مرتب باشد"
+
+  - rule: timezone_aware
+    severity: warning
+    description: "timestamp باید timezone-aware باشد (ترجیحاً UTC)"
+
+# نام‌گذاری فایل پیشنهادی
+file_naming:
+  pattern: "market_YYYY-MM-DD_provider.xlsx"
+  example: "market_2026-10-06_tsetmc.xlsx"
+  description: "نام فایل باید تاریخ و منبع داده را شامل باشد"
+
+# ساختار پوشه‌ها
+directory_layout:
+  inbox: "data/inbox/market/"
+  processing: "data/processing/"
+  archive: "data/archive/market/"
+  rejected: "data/rejected/"
+  normalized: "data/normalized/"
+  manifests: "data/manifests/"
+  agent_outputs: "data/agent_outputs/"
+  reports: "data/reports/daily/"
