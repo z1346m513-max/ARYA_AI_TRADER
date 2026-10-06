@@ -36,7 +36,7 @@ class TestCodalEventAnalyzer(unittest.TestCase):
         s = self.analyzer.analyze([_letter("تصمیمات افزایش سرمایه شرکت")])
         self.assertGreater(s.score, 0)
         self.assertGreater(s.confidence, 0)
-        self.assertTrue(any("افزایش" in r for r in s.details["reasons"])
+        self.assertTrue(any("افزایش" in r for r in s.details["reasons"]))
 
     def test_halt(self) -> None:
         s = self.analyzer.analyze([_letter("توقف نماد به دلیل")])
