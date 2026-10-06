@@ -1,13 +1,12 @@
 """
-CLI — بورس ایران + کدال + Cache-First + Symbol Master.
+CLI — بورس ایران + کدال + سهامداران + Cache-First + Symbol Master.
 
 نمونه:
     arya analyze --ticker FOOLAD
-    arya list-symbols
-    arya list-industries
-    arya list-symbols --industry "فلزات اساسی"
-    arya scan --industry "بانک"
+    arya shareholders --changes
+    arya shareholders --ticker فولاد
     arya codal --symbol فولاد
+    arya list-industries
     arya cache-stats
 """
 from __future__ import annotations
@@ -20,11 +19,12 @@ from rich.console import Console
 from arya.app.bootstrap import AryaApp
 from arya.dashboard.console_dashboard import render_recommendation
 from arya.cli.codal_command import register_codal_parser, run_codal
+from arya.cli.shareholder_command import register_shareholder_parser, run_shareholders
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="arya", description="ARYA AI Trader — بورس ایران و کدال"
+        prog="arya", description="ARYA AI Trader — بورس ایران، کدال و سهامداران"
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -34,14 +34,10 @@ def build_parser() -> argparse.ArgumentParser:
     analyze_p.add_argument("--timeframe", default="1d")
     analyze_p.add_argument("--force-refresh", action="store_true")
 
-    list_p = sub.add_parser("list-symbols", help="لیست نمادها (Provider یا Symbol Master)")
+    list_p = sub.add_parser("list-symbols", help="لیست نمادها")
     list_p.add_argument("--market", default="stock", choices=["stock"])
-    list_p.add_argument("--industry", default=None, help="فیلتر صنعت")
-    list_p.add_argument(
-        "--from-master",
-        action="store_true",
-        help="از data/symbols/equities_flat.json بخوان",
-    )
+    list_p.add_argument("--industry", default=None)
+    list_p.add_argument("--from-master", action="store_true")
 
     sub.add_parser("list-industries", help="لیست صنایع Symbol Master")
 
@@ -49,12 +45,13 @@ def build_parser() -> argparse.ArgumentParser:
     scan_p.add_argument("--market", default="stock", choices=["stock"])
     scan_p.add_argument("--timeframe", default="1d")
     scan_p.add_argument("--force-refresh", action="store_true")
-    scan_p.add_argument("--industry", default=None, help="فقط یک صنعت")
-    scan_p.add_argument("--limit", type=int, default=0, help="حداکثر تعداد (0=همه)")
+    scan_p.add_argument("--industry", default=None)
+    scan_p.add_argument("--limit", type=int, default=0)
 
     sub.add_parser("cache-stats", help="نمایش hit-ratio کش")
 
     register_codal_parser(sub)
+    register_shareholder_parser(sub)
     return parser
 
 
@@ -65,6 +62,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "codal":
         return run_codal(args, console)
+    if args.command == "shareholders":
+        return run_shareholders(args, console)
 
     app = AryaApp()
 
