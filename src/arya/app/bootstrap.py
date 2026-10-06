@@ -1,9 +1,10 @@
 """
-Bootstrap: پایپ‌لاین ARYA — بورس ایران + کدال + Cache-First.
+Bootstrap: پایپ‌لاین ARYA — بورس ایران + کدال + Cache-First + Symbol Master.
 """
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from arya.analysis.analyzers.codal_event_analyzer import CodalEventAnalyzer
 from arya.analysis.analyzers.fundamental_analyzer import FundamentalAnalyzer
@@ -23,6 +24,7 @@ from arya.providers.codal.symbol_map import to_codal_symbol
 from arya.risk.risk_manager import RiskManager
 from arya.storage.cache import OHLCVStore
 from arya.storage.cache_metrics import cache_metrics
+from arya.symbols.symbol_master import SymbolMaster
 from arya.technical.indicator_engine import IndicatorEngine
 from arya.scanner.filters import MarketFilterConfig, FilterResult, scan_ohlcv
 from arya.technical.strategies.trend_momentum import StrategySignal, trend_momentum_signal
@@ -47,6 +49,12 @@ class AryaApp:
         self.risk_manager = RiskManager()
         self.recommendation_engine = RecommendationEngine()
         self._codal: CodalProvider | None = None
+
+        symbols_path = (
+            self.settings.app.get("paths", {}).get("symbols")
+            or "data/symbols/"
+        )
+        self.symbol_master = SymbolMaster(Path(symbols_path) / "equities_flat.json")
 
     def _configure_logging(self) -> None:
         level = getattr(logging, self.settings.app.get("logging", {}).get("level", "INFO"))
@@ -165,7 +173,13 @@ class AryaApp:
         limit: int = 200,
     ) -> Recommendation:
         market = self._assert_market(market)
-        symbol = Symbol(ticker=ticker, market=market)
+        meta = self.symbol_master.get(ticker)
+        symbol = Symbol(
+            ticker=ticker,
+            market=market,
+            name=meta.name if meta else None,
+            industry=meta.industry if meta else None,
+        )
 
         series, source = self._fetch_series(
             symbol, timeframe, limit=limit, force_refresh=force_refresh
@@ -194,6 +208,9 @@ class AryaApp:
             section_scores=section_scores,
         )
 
+        if meta and meta.industry:
+            recommendation.reasons.insert(0, f"صنعت: {meta.industry}")
+
         if codal_section and codal_section.details.get("reasons"):
             existing = set(recommendation.reasons)
             for r in codal_section.details["reasons"]:
@@ -204,6 +221,15 @@ class AryaApp:
 
     def list_symbols(self, market: str = "stock") -> list[Symbol]:
         return self._provider_for_market(market).list_symbols()
+
+    def list_symbols_master(self, industry: str | None = None) -> list[Symbol]:
+        if industry:
+            return self.symbol_master.list_by_industry(industry)
+        return self.symbol_master.list_all()
+
+    def list_industries(self) -> list[tuple[str, int]]:
+        names = self.symbol_master.list_industries()
+        return [(n, len(self.symbol_master.list_by_industry(n))) for n in names]
 
     def evaluate_market_filter(self, ticker: str, market: str = "stock", timeframe: str = "1d") -> FilterResult:
         market = self._assert_market(market)
