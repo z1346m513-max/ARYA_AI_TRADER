@@ -1,19 +1,17 @@
 """
-Bootstrap: نقطه‌ی مرکزی راه‌اندازی برنامه. تمام لایه‌های پایپ‌لاین را می‌سازد
-و متد analyze_symbol() را در اختیار CLI / Dashboard / Scheduler قرار می‌دهد.
+Bootstrap: راه‌اندازی پایپ‌لاین ARYA — فقط بورس ایران + کدال.
 
-زنجیره‌ی اجرا دقیقاً منطبق بر دیاگرام معماری است:
-
-    Providers -> Storage -> Indicator Engine -> Analysis Engine ->
-    Scoring Engine -> AI Decision Engine -> Risk Manager ->
-    Recommendation Engine -> Dashboard
+    Providers(TSETMC/Mock) -> Storage -> Indicator -> Analysis ->
+    Scoring -> Decision -> Risk -> Recommendation
+    + Codal event section (در صورت enabled)
 """
 from __future__ import annotations
 
 import logging
 
-from arya.analysis.analyzers.technical_analyzer import TechnicalAnalyzer
+from arya.analysis.analyzers.codal_event_analyzer import CodalEventAnalyzer
 from arya.analysis.analyzers.fundamental_analyzer import FundamentalAnalyzer
+from arya.analysis.analyzers.technical_analyzer import TechnicalAnalyzer
 from arya.analysis.recommendation.recommendation_engine import RecommendationEngine
 from arya.analysis.scoring.scoring_engine import ScoringEngine
 from arya.ai.reasoning.decision_engine import RuleBasedDecisionEngine
@@ -22,8 +20,10 @@ from arya.models.analysis_result import Recommendation
 from arya.models.fundamentals import FundamentalMetrics
 from arya.models.market_data import Symbol
 from arya.providers.base import ProviderRegistry
-import arya.providers.market.mock_provider  # noqa: F401  (ثبت درایور "mock")
-import arya.providers.market.tsetmc_provider  # noqa: F401  (ثبت درایور "tsetmc")
+import arya.providers.market.mock_provider  # noqa: F401
+import arya.providers.market.tsetmc_provider  # noqa: F401
+from arya.providers.codal import CodalProvider, CodalProviderError
+from arya.providers.codal.symbol_map import to_codal_symbol
 from arya.risk.risk_manager import RiskManager
 from arya.storage.cache import OHLCVStore
 from arya.technical.indicator_engine import IndicatorEngine
@@ -32,9 +32,11 @@ from arya.technical.strategies.trend_momentum import StrategySignal, trend_momen
 
 logger = logging.getLogger(__name__)
 
+ALLOWED_MARKETS = frozenset({"stock"})
+
 
 class AryaApp:
-    """Facade کلی برنامه - تمام لایه‌ها این‌جا Wire می‌شوند."""
+    """Facade کلی برنامه."""
 
     def __init__(self, settings: Settings | None = None):
         self.settings = settings or Settings.load()
@@ -44,10 +46,12 @@ class AryaApp:
         self.indicator_engine = IndicatorEngine(self.settings)
         self.technical_analyzer = TechnicalAnalyzer()
         self.fundamental_analyzer = FundamentalAnalyzer()
+        self.codal_event_analyzer = CodalEventAnalyzer()
         self.scoring_engine = ScoringEngine(self.settings)
         self.decision_engine = RuleBasedDecisionEngine()
         self.risk_manager = RiskManager()
         self.recommendation_engine = RecommendationEngine()
+        self._codal: CodalProvider | None = None
 
     def _configure_logging(self) -> None:
         level = getattr(logging, self.settings.app.get("logging", {}).get("level", "INFO"))
@@ -56,46 +60,80 @@ class AryaApp:
             format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
         )
 
+    def _assert_market(self, market: str) -> str:
+        if market not in ALLOWED_MARKETS:
+            raise ValueError(
+                f"ARYA فقط بازار stock (بورس ایران) را پشتیبانی می‌کند؛ دریافت شد: {market!r}"
+            )
+        return market
+
     def _provider_for_market(self, market: str):
+        market = self._assert_market(market)
         cfg = self.settings.provider_for(market)
         driver = cfg.get("driver", "mock")
-        kwargs = {"market": market}
+        kwargs: dict = {"market": market}
         if driver == "tsetmc":
             for key in ("base_url", "timeout_seconds", "retries", "backoff_seconds"):
                 if key in cfg:
                     kwargs[{"timeout_seconds": "timeout"}.get(key, key)] = cfg[key]
         return ProviderRegistry.create(driver, **kwargs)
 
+    def _codal_provider(self) -> CodalProvider | None:
+        codal_cfg = self.settings.providers.get("codal", {})
+        if not codal_cfg.get("enabled", False):
+            return None
+        if self._codal is None:
+            kwargs = {}
+            if codal_cfg.get("base_url"):
+                kwargs["base_url"] = codal_cfg["base_url"]
+            if "timeout_seconds" in codal_cfg:
+                kwargs["timeout"] = codal_cfg["timeout_seconds"]
+            if "retries" in codal_cfg:
+                kwargs["retries"] = codal_cfg["retries"]
+            if "backoff_seconds" in codal_cfg:
+                kwargs["backoff_seconds"] = codal_cfg["backoff_seconds"]
+            if "min_interval_seconds" in codal_cfg:
+                kwargs["min_interval_seconds"] = codal_cfg["min_interval_seconds"]
+            self._codal = CodalProvider(**kwargs)
+        return self._codal
+
+    def _codal_section(self, ticker: str):
+        provider = self._codal_provider()
+        if provider is None:
+            return None
+        symbol = to_codal_symbol(ticker)
+        try:
+            letters = provider.fetch_recent(symbol, limit=10)
+            return self.codal_event_analyzer.analyze(letters)
+        except CodalProviderError as exc:
+            logger.warning("کدال در دسترس نیست (%s): %s", symbol, exc)
+            return None
+        except Exception as exc:  # noqa: BLE001 — پایپ‌لاین نباید به‌خاطر کدال بشکند
+            logger.warning("خطای غیرمنتظره کدال: %s", exc)
+            return None
+
     def analyze_symbol(self, ticker: str, market: str = "stock", timeframe: str = "1d") -> Recommendation:
-        """اجرای کامل پایپ‌لاین برای یک نماد و برگرداندن Recommendation نهایی."""
+        market = self._assert_market(market)
         symbol = Symbol(ticker=ticker, market=market)
 
-        # 1) Providers
         provider = self._provider_for_market(market)
         series = provider.fetch_ohlcv(symbol, timeframe=timeframe, limit=200)
-
-        # 2) Storage (کش کردن برای فراخوانی‌های بعدی)
         self.store.save(series)
-
         df = series.to_dataframe()
 
-        # 3) Indicator Engine
         indicator_results = self.indicator_engine.run(df)
-
-        # 4) Analysis Engine (فعلا فقط بخش technical پیاده‌سازی شده)
         technical_section = self.technical_analyzer.analyze(indicator_results)
         section_scores = [technical_section]
 
-        # 5) Scoring Engine
-        overall_score, overall_confidence, section_scores = self.scoring_engine.combine(section_scores)
+        codal_section = self._codal_section(ticker)
+        if codal_section is not None:
+            section_scores.append(codal_section)
 
-        # 6) AI Decision Engine
+        overall_score, overall_confidence, section_scores = self.scoring_engine.combine(
+            section_scores
+        )
         decision = self.decision_engine.decide(overall_score, overall_confidence, section_scores)
-
-        # 7) Risk Manager
         risk = self.risk_manager.assess(df, decision)
-
-        # 8) Recommendation Engine
         recommendation = self.recommendation_engine.build(
             symbol=str(symbol),
             df=df,
@@ -104,20 +142,28 @@ class AryaApp:
             section_scores=section_scores,
         )
 
+        # دلایل کدال را به لیست reasons اضافه کن (اگر موتور پیشنهاد نگذاشته باشد)
+        if codal_section and codal_section.details.get("reasons"):
+            extra = list(codal_section.details["reasons"])
+            existing = set(recommendation.reasons)
+            for r in extra:
+                if r not in existing:
+                    recommendation.reasons.append(r)
+
         return recommendation
 
     def list_symbols(self, market: str = "stock") -> list[Symbol]:
         return self._provider_for_market(market).list_symbols()
 
     def evaluate_market_filter(self, ticker: str, market: str = "stock", timeframe: str = "1d") -> FilterResult:
-        """فیلتر کمّی آخرین وضعیت نماد را بدون تولید توصیهٔ معاملاتی برمی‌گرداند."""
+        market = self._assert_market(market)
         provider = self._provider_for_market(market)
         series = provider.fetch_ohlcv(Symbol(ticker=ticker, market=market), timeframe=timeframe, limit=200)
         cfg = MarketFilterConfig(**self.settings.filters.get("market_watch", {}))
         return scan_ohlcv(series.to_dataframe(), cfg)
 
     def evaluate_strategy(self, ticker: str, market: str = "stock", timeframe: str = "1d") -> StrategySignal:
-        """استراتژی قابل توضیح را روی دادهٔ آخر provider اجرا می‌کند."""
+        market = self._assert_market(market)
         provider = self._provider_for_market(market)
         series = provider.fetch_ohlcv(Symbol(ticker=ticker, market=market), timeframe=timeframe, limit=200)
         cfg = self.settings.filters.get("strategy", {})
@@ -125,5 +171,11 @@ class AryaApp:
         return trend_momentum_signal(series.to_dataframe(), **cfg)
 
     def analyze_fundamentals(self, metrics: FundamentalMetrics):
-        """تحلیل نسبت‌های بنیادی تزریق‌شده از Codal یا منبع معتبر دیگر."""
         return self.fundamental_analyzer.analyze(metrics)
+
+    def fetch_codal_letters(self, ticker: str, limit: int = 10):
+        """دسترسی مستقیم به اطلاعیه‌های کدال برای یک نماد."""
+        provider = self._codal_provider()
+        if provider is None:
+            raise CodalProviderError("کدال در providers.yaml غیرفعال است")
+        return provider.fetch_recent(to_codal_symbol(ticker), limit=limit)
