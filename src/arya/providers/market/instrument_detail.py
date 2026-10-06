@@ -1,13 +1,6 @@
 """
-جزئیات نماد — معادل صفحه:
+جزئیات نماد — معادل:
   https://old.tsetmc.com/Loader.aspx?ParTree=151311&i={InsCode}
-  https://main.tsetmc.com/InstInfo/{InsCode}
-
-API CDN (الگوی 5j9/tsetmc و pytse-client):
-  GET /api/Instrument/GetInstrumentSearch/{Query}
-  GET /api/Instrument/GetInstrumentInfo/{InsCode}
-  GET /api/ClosingPrice/GetClosingPriceInfo/{InsCode}
-  GET /api/BestLimits/{InsCode}   (اختیاری — صف)
 """
 from __future__ import annotations
 
@@ -19,6 +12,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote
 from urllib.request import Request, urlopen
 
+from arya.providers.market.ticker_map import search_candidates
+
 
 class InstrumentDetailError(RuntimeError):
     pass
@@ -26,22 +21,20 @@ class InstrumentDetailError(RuntimeError):
 
 @dataclass
 class InstrumentDetail:
-    """اسنپ‌شات قابل‌نمایش صفحه جزئیات نماد."""
-
     ticker: str
     ins_code: str
     name: str | None = None
     name_en: str | None = None
     isin: str | None = None
     cisin: str | None = None
-    market_title: str | None = None  # flowTitle
-    board_title: str | None = None  # cgrValCotTitle
+    market_title: str | None = None
+    board_title: str | None = None
     sector: str | None = None
     sector_code: str | None = None
-    state: str | None = None  # مجاز / ممنوع / ...
-    total_shares: float | None = None  # zTitad
+    state: str | None = None
+    total_shares: float | None = None
     base_volume: float | None = None
-    free_float_pct: float | None = None  # kAjCapValCpsIdx
+    free_float_pct: float | None = None
     eps: float | None = None
     sector_pe: float | None = None
     pe: float | None = None
@@ -112,9 +105,10 @@ class InstrumentDetailProvider:
                 return json.loads(raw.decode("utf-8-sig"))
             except HTTPError as exc:
                 last_error = exc
-                if exc.code in {429, 500, 502, 503, 504} and attempt < self.retries - 1:
-                    time.sleep(self.backoff_seconds * (2**attempt))
-                    continue
+                if exp_retry := (exc.code in {429, 500, 502, 503, 504}):
+                    if attempt < self.retries - 1:
+                        time.sleep(self.backoff_seconds * (2**attempt))
+                        continue
                 break
             except (URLError, TimeoutError, json.JSONDecodeError) as exc:
                 last_error = exc
@@ -125,19 +119,31 @@ class InstrumentDetailProvider:
         raise InstrumentDetailError(f"جزئیات نماد ناموفق: {url}") from last_error
 
     def resolve_ins_code(self, ticker: str) -> str:
-        payload = self._get_json(f"/api/Instrument/GetInstrumentSearch/{quote(ticker)}")
-        rows = payload.get("instrumentSearch") or []
-        if not isinstance(rows, list):
-            rows = []
-        for row in rows:
-            if not isinstance(row, dict):
+        last_err: Exception | None = None
+        for query in search_candidates(ticker):
+            try:
+                payload = self._get_json(
+                    f"/api/Instrument/GetInstrumentSearch/{quote(query)}"
+                )
+            except InstrumentDetailError as exc:
+                last_err = exc
                 continue
-            sym = str(row.get("lVal18AFC") or row.get("lVal18") or "").strip()
-            if sym == ticker and row.get("insCode"):
-                return str(row["insCode"])
-        if rows and isinstance(rows[0], dict) and rows[0].get("insCode"):
-            return str(rows[0]["insCode"])
-        raise InstrumentDetailError(f"نماد پیدا نشد: {ticker}")
+            rows = payload.get("instrumentSearch") or []
+            if not isinstance(rows, list):
+                rows = []
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                sym = str(row.get("lVal18AFC") or row.get("lVal18") or "").strip()
+                if sym == query and row.get("insCode"):
+                    return str(row["insCode"])
+            if rows and isinstance(rows[0], dict) and rows[0].get("insCode"):
+                return str(rows[0]["insCode"])
+        if last_err:
+            raise InstrumentDetailError(f"نماد پیدا نشد: {ticker}") from last_err
+        raise InstrumentDetailError(
+            f"نماد پیدا نشد: {ticker} — برای تستمک نماد فارسی بزنید (مثلاً فولاد)"
+        )
 
     @staticmethod
     def _num(data: Any, *keys: str) -> float | None:
@@ -164,7 +170,6 @@ class InstrumentDetailProvider:
         return None
 
     def fetch(self, ticker: str, *, with_orderbook: bool = True) -> InstrumentDetail:
-        """جمع‌آوری اطلاعات صفحه جزئیات نماد."""
         ins = self.resolve_ins_code(ticker)
 
         info_payload = self._get_json(f"/api/Instrument/GetInstrumentInfo/{ins}")
@@ -183,14 +188,11 @@ class InstrumentDetailProvider:
         thr_obj = info.get("staticThreshold") if isinstance(info.get("staticThreshold"), dict) else {}
 
         close = self._num(price, "pClosing", "pc")
-        yest = self._num(price, "priceYesterday", "py")
         last = self._num(price, "pDrCotVal", "pl", "last")
         eps_val = self._num(eps_obj, "estimatedEPS", "epsValue", "eps")
         pe = None
         if close and eps_val and eps_val != 0:
             pe = round(close / eps_val, 4)
-
-        free_float = self._num(info, "kAjCapValCpsIdx")
 
         best_limits: list[dict[str, Any]] = []
         if with_orderbook:
@@ -202,7 +204,7 @@ class InstrumentDetailProvider:
             except InstrumentDetailError:
                 best_limits = []
 
-        detail = InstrumentDetail(
+        return InstrumentDetail(
             ticker=self._str(info, "lVal18AFC", "lVal18") or ticker,
             ins_code=ins,
             name=self._str(info, "lVal30"),
@@ -216,14 +218,14 @@ class InstrumentDetailProvider:
             state=self._str(state_obj, "cEtavalTitle", "cEtaval"),
             total_shares=self._num(info, "zTitad"),
             base_volume=self._num(info, "baseVol"),
-            free_float_pct=free_float,
+            free_float_pct=self._num(info, "kAjCapValCpsIdx"),
             eps=eps_val,
             sector_pe=self._num(eps_obj, "sectorPE"),
             pe=pe,
             psr=self._num(eps_obj, "psr"),
             last_price=last,
             close_price=close,
-            yesterday_price=yest,
+            yesterday_price=self._num(price, "priceYesterday", "py"),
             open_price=self._num(price, "priceFirst", "pf"),
             high_price=self._num(price, "priceMax"),
             low_price=self._num(price, "priceMin"),
@@ -243,4 +245,3 @@ class InstrumentDetailProvider:
             raw_info=info,
             raw_price=price,
         )
-        return detail
