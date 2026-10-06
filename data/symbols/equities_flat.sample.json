@@ -1,0 +1,7 @@
+[
+  {"ticker": "فولاد", "name": "فولاد مبارکه اصفهان", "industry": "فلزات اساسی", "market": "stock"},
+  {"ticker": "فملی", "name": "ملی صنایع مس ایران", "industry": "فلزات اساسی", "market": "stock"},
+  {"ticker": "شستا", "name": "سرمایه‌گذاری تامین اجتماعی", "industry": "سرمایه‌گذاری‌ها", "market": "stock"},
+  {"ticker": "خودرو", "name": "ایران خودرو", "industry": "خودرو و ساخت قطعات", "market": "stock"},
+  {"ticker": "وبملت", "name": "بانک ملت", "industry": "بانک‌ها و مؤسسات اعتباری", "market": "stock"}
+]
