@@ -1,27 +1,37 @@
 app:
   name: "ARYA AI Trader"
-  version: "0.1.0-milestone1"
-  environment: "development"   # development | staging | production
-  language: "fa"                # fa | en
+  version: "0.2.0-tse-codal"
+  environment: "development"
+  language: "fa"
   timezone: "Asia/Tehran"
+  scope: "iran_tse"
 
 logging:
-  level: "INFO"                 # DEBUG | INFO | WARNING | ERROR
+  level: "INFO"
   path: "data/logs/arya.log"
   max_size_mb: 10
   backup_count: 5
 
 storage:
-  driver: "sqlite"               # sqlite | postgres (future)
+  driver: "sqlite"
   path: "data/database/arya.db"
   cache_path: "data/cache/"
+  cache:
+    enabled: true
+    ttl_seconds:
+      "1m": 60
+      "5m": 180
+      "15m": 300
+      "1h": 900
+      "1d": 14400
+    default_ttl_seconds: 3600
+    enforce_min_candles: true
 
 markets:
   enabled:
-    - stock       # بورس ایران
-    - crypto
-    - forex
+    - stock
 
 paths:
   reports: "data/reports/"
   exports: "data/exports/"
+  symbols: "data/symbols/"
