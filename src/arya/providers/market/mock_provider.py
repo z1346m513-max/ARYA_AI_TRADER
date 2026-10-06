@@ -1,9 +1,4 @@
-"""
-Provider آزمایشی (Mock) که داده‌ی OHLCV مصنوعی ولی واقع‌گرایانه تولید می‌کند.
-تا زمانی که اتصال واقعی به TSETMC / Binance / Oanda در فازهای بعدی اضافه شود،
-تمام توسعه و تست پایپ‌لاین با همین Provider انجام می‌شود؛ به همین دلیل رفتار آن
-Deterministic (بر اساس seed) است تا تست‌ها Reproducible بمانند.
-"""
+"""Provider آزمایشی — فقط نمادهای فارسی بورس ایران."""
 
 from __future__ import annotations
 
@@ -14,13 +9,19 @@ import numpy as np
 
 from arya.models.market_data import Candle, OHLCVSeries, Symbol
 from arya.providers.base import MarketDataProvider, ProviderRegistry
+from arya.providers.market.ticker_map import to_tse_symbol
 
-
-_SAMPLE_SYMBOLS = {
-    "stock": [("FOOLAD", "فولاد مبارکه"), ("SHASTA", "پتروشیمی شازند")],
-    "crypto": [("BTCUSDT", "Bitcoin"), ("ETHUSDT", "Ethereum")],
-    "forex": [("EURUSD", "Euro/US Dollar"), ("GBPUSD", "Pound/US Dollar")],
-}
+# فقط بورس ایران — نماد فارسی
+_SAMPLE_STOCK: list[tuple[str, str]] = [
+    ("فولاد", "فولاد مبارکه اصفهان"),
+    ("فملی", "ملی صنایع مس ایران"),
+    ("شپنا", "پالایش نفت اصفهان"),
+    ("خودرو", "ایران خودرو"),
+    ("خساپا", "سایپا"),
+    ("شستا", "سرمایه‌گذاری تامین اجتماعی"),
+    ("وبملت", "بانک ملت"),
+    ("کگل", "گل‌گهر"),
+]
 
 
 @ProviderRegistry.register("mock")
@@ -28,25 +29,36 @@ class MockMarketProvider(MarketDataProvider):
     name = "mock"
 
     def __init__(self, market: str = "stock", seed: int = 42):
+        if market != "stock":
+            raise ValueError("Mock فقط market='stock' (بورس ایران) را پشتیبانی می‌کند")
         self.market = market
         self._rng = np.random.default_rng(seed)
 
     def list_symbols(self) -> list[Symbol]:
         return [
-            Symbol(ticker=t, market=self.market, name=n)
-            for t, n in _SAMPLE_SYMBOLS.get(self.market, [])
+            Symbol(ticker=t, market="stock", name=n, currency="IRR")
+            for t, n in _SAMPLE_STOCK
         ]
 
     def fetch_ohlcv(self, symbol: Symbol, timeframe: str, limit: int = 200) -> OHLCVSeries:
-        candles = self._generate_candles(symbol.ticker, limit)
-        return OHLCVSeries(symbol=symbol, timeframe=timeframe, candles=candles)
+        ticker = to_tse_symbol(symbol.ticker)
+        candles = self._generate_candles(ticker, limit)
+        return OHLCVSeries(
+            symbol=Symbol(
+                ticker=ticker,
+                market="stock",
+                name=symbol.name,
+                currency="IRR",
+                industry=symbol.industry,
+            ),
+            timeframe=timeframe,
+            candles=candles,
+        )
 
     def _generate_candles(self, ticker: str, limit: int) -> list[Candle]:
-        # seed اختصاصی برای هر نماد تا داده‌ها بین نمادها متفاوت باشند
         local_rng = np.random.default_rng(abs(hash(ticker)) % (2**32))
         base_price = 100 + (abs(hash(ticker)) % 500)
-        prices = [base_price]
-        # حرکت قیمت: random walk + یک روند ملایم سینوسی برای واقعی‌تر شدن
+        prices = [float(base_price)]
         for i in range(1, limit):
             drift = 0.15 * math.sin(i / 15)
             shock = local_rng.normal(loc=drift, scale=1.2)

@@ -11,14 +11,19 @@ from arya.providers.market.instrument_detail import (
     InstrumentDetailError,
     InstrumentDetailProvider,
 )
+from arya.providers.market.ticker_map import to_tse_symbol
 
 
 def register_instrument_parser(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         "instrument",
-        help="صفحه جزئیات نماد (معادل ParTree=151311)",
+        help="صفحه جزئیات نماد (ParTree=151311)",
     )
-    p.add_argument("--ticker", required=True, help="نماد، مثلاً فولاد یا FOOLAD")
+    p.add_argument(
+        "--ticker",
+        required=True,
+        help="نماد فارسی تابلو، مثلاً فولاد یا فملی",
+    )
     p.add_argument(
         "--no-orderbook",
         action="store_true",
@@ -26,11 +31,9 @@ def register_instrument_parser(sub: argparse._SubParsersAction) -> None:
     )
 
 
-def _fmt(v: float | None, *, pct: bool = False, signed: bool = False) -> str:
+def _fmt(v: float | None, *, signed: bool = False) -> str:
     if v is None:
         return "—"
-    if pct:
-        return f"{v:.2f}%"
     if signed:
         return f"{v:+,.0f}"
     if abs(v) >= 1000:
@@ -40,14 +43,15 @@ def _fmt(v: float | None, *, pct: bool = False, signed: bool = False) -> str:
 
 def run_instrument(args: argparse.Namespace, console: Console | None = None) -> int:
     console = console or Console()
+    ticker = to_tse_symbol(args.ticker)
     try:
         d = InstrumentDetailProvider().fetch(
-            args.ticker, with_orderbook=not args.no_orderbook
+            ticker, with_orderbook=not args.no_orderbook
         )
     except InstrumentDetailError as exc:
         console.print(f"[red]خطا:[/red] {exc}")
         console.print(
-            "[yellow]نکته:[/yellow] CDN تستمک معمولاً از IP ایران در دسترس است."
+            "[yellow]نکته:[/yellow] نماد را فارسی وارد کنید (فولاد، فملی، شپنا، …)."
         )
         return 1
 
@@ -62,7 +66,7 @@ def run_instrument(args: argparse.Namespace, console: Console | None = None) -> 
     price = Table(title="قیمت و معاملات", show_header=True, header_style="bold")
     price.add_column("فیلد")
     price.add_column("مقدار", justify="right")
-    rows = [
+    for k, v in [
         ("آخرین", _fmt(d.last_price)),
         ("پایانی", _fmt(d.close_price)),
         ("دیروز", _fmt(d.yesterday_price)),
@@ -76,8 +80,7 @@ def run_instrument(args: argparse.Namespace, console: Console | None = None) -> 
         ("حجم مبنا", _fmt(d.base_volume)),
         ("آستانه بالا", _fmt(d.threshold_max)),
         ("آستانه پایین", _fmt(d.threshold_min)),
-    ]
-    for k, v in rows:
+    ]:
         price.add_row(k, v)
     console.print(price)
 
@@ -107,12 +110,12 @@ def run_instrument(args: argparse.Namespace, console: Console | None = None) -> 
         for i, row in enumerate(d.best_limits[:5], 1):
             ob.add_row(
                 str(i),
-                str(row.get("zOrdMeDem") or row.get("numberOfOrdersAtBestBuy") or "—"),
-                str(row.get("qTitMeDem") or row.get("buyVolume") or "—"),
-                str(row.get("pMeDem") or row.get("buyPrice") or "—"),
-                str(row.get("pMeOf") or row.get("sellPrice") or "—"),
-                str(row.get("qTitMeOf") or row.get("sellVolume") or "—"),
-                str(row.get("zOrdMeOf") or row.get("numberOfOrdersAtBestSell") or "—"),
+                str(row.get("zOrdMeDem") or "—"),
+                str(row.get("qTitMeDem") or "—"),
+                str(row.get("pMeDem") or "—"),
+                str(row.get("pMeOf") or "—"),
+                str(row.get("qTitMeOf") or "—"),
+                str(row.get("zOrdMeOf") or "—"),
             )
         console.print(ob)
 

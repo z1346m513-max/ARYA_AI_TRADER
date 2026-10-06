@@ -1,12 +1,12 @@
 """
-CLI — بورس ایران.
+CLI — بورس ایران (نمادها به فارسی).
 
 نمونه:
     arya instrument --ticker فولاد
-    arya analyze --ticker FOOLAD
-    arya codal --symbol فولاد --event capital
-    arya client-type --ticker فولاد
-    arya shareholders --changes
+    arya client-type --ticker فملی
+    arya codal --symbol شپنا --event capital
+    arya analyze --ticker خودرو
+    arya shareholders --ticker وبملت
 """
 from __future__ import annotations
 
@@ -21,16 +21,22 @@ from arya.cli.codal_command import register_codal_parser, run_codal
 from arya.cli.shareholder_command import register_shareholder_parser, run_shareholders
 from arya.cli.client_type_command import register_client_type_parser, run_client_type
 from arya.cli.instrument_command import register_instrument_parser, run_instrument
+from arya.providers.market.ticker_map import to_tse_symbol
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="arya", description="ARYA AI Trader — بورس ایران"
+        prog="arya",
+        description="ARYA AI Trader — بورس ایران (نماد فارسی)",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
     analyze_p = sub.add_parser("analyze", help="تحلیل یک نماد بورسی")
-    analyze_p.add_argument("--ticker", required=True)
+    analyze_p.add_argument(
+        "--ticker",
+        required=True,
+        help="نماد فارسی، مثلاً فولاد",
+    )
     analyze_p.add_argument("--market", default="stock", choices=["stock"])
     analyze_p.add_argument("--timeframe", default="1d")
     analyze_p.add_argument("--force-refresh", action="store_true")
@@ -75,8 +81,9 @@ def main(argv: list[str] | None = None) -> int:
     app = AryaApp()
 
     if args.command == "analyze":
+        ticker = to_tse_symbol(args.ticker)
         rec = app.analyze_symbol(
-            args.ticker,
+            ticker,
             market=args.market,
             timeframe=args.timeframe,
             force_refresh=args.force_refresh,
@@ -107,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
         for s in symbols:
             try:
                 rec = app.analyze_symbol(
-                    s.ticker,
+                    to_tse_symbol(s.ticker),
                     market=args.market,
                     timeframe=args.timeframe,
                     force_refresh=args.force_refresh,
