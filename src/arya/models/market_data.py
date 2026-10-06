@@ -1,4 +1,4 @@
-"""مدل‌های داده‌ی بازار: کندل، سری زمانی و نماد."""
+"""مدل‌های داده‌ی بازار: کندل، سری زمانی و نماد (فقط بورس ایران)."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -9,12 +9,13 @@ import pandas as pd
 
 @dataclass(frozen=True)
 class Symbol:
-    """یک نماد قابل معامله (سهم، رمزارز، جفت‌ارز)."""
+    """نماد بازار سرمایه ایران."""
 
     ticker: str
-    market: str          # stock | crypto | forex
+    market: str = "stock"  # فقط stock
     name: str | None = None
     currency: str = "IRR"
+    industry: str | None = None
 
     def __str__(self) -> str:
         return f"{self.ticker}@{self.market}"
@@ -22,8 +23,6 @@ class Symbol:
 
 @dataclass
 class Candle:
-    """یک کندل OHLCV."""
-
     timestamp: datetime
     open: float
     high: float
@@ -34,8 +33,6 @@ class Candle:
 
 @dataclass
 class OHLCVSeries:
-    """سری زمانی کندل‌ها برای یک نماد و تایم‌فریم مشخص."""
-
     symbol: Symbol
     timeframe: str
     candles: list[Candle] = field(default_factory=list)
