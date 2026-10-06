@@ -1,9 +1,5 @@
 """
-Bootstrap: راه‌اندازی پایپ‌لاین ARYA — فقط بورس ایران + کدال.
-
-    Providers(TSETMC/Mock) -> Storage -> Indicator -> Analysis ->
-    Scoring -> Decision -> Risk -> Recommendation
-    + Codal event section (در صورت enabled)
+Bootstrap: پایپ‌لاین ARYA — بورس ایران + کدال + Cache-First.
 """
 from __future__ import annotations
 
@@ -26,6 +22,7 @@ from arya.providers.codal import CodalProvider, CodalProviderError
 from arya.providers.codal.symbol_map import to_codal_symbol
 from arya.risk.risk_manager import RiskManager
 from arya.storage.cache import OHLCVStore
+from arya.storage.cache_metrics import cache_metrics
 from arya.technical.indicator_engine import IndicatorEngine
 from arya.scanner.filters import MarketFilterConfig, FilterResult, scan_ohlcv
 from arya.technical.strategies.trend_momentum import StrategySignal, trend_momentum_signal
@@ -36,8 +33,6 @@ ALLOWED_MARKETS = frozenset({"stock"})
 
 
 class AryaApp:
-    """Facade کلی برنامه."""
-
     def __init__(self, settings: Settings | None = None):
         self.settings = settings or Settings.load()
         self._configure_logging()
@@ -66,6 +61,13 @@ class AryaApp:
                 f"ARYA فقط بازار stock (بورس ایران) را پشتیبانی می‌کند؛ دریافت شد: {market!r}"
             )
         return market
+
+    def _cache_ttl(self, timeframe: str) -> int:
+        cache_cfg = self.settings.app.get("storage", {}).get("cache", {})
+        if not cache_cfg.get("enabled", True):
+            return 0
+        ttl_map = cache_cfg.get("ttl_seconds", {})
+        return int(ttl_map.get(timeframe, cache_cfg.get("default_ttl_seconds", 3600)))
 
     def _provider_for_market(self, market: str):
         market = self._assert_market(market)
@@ -108,19 +110,69 @@ class AryaApp:
         except CodalProviderError as exc:
             logger.warning("کدال در دسترس نیست (%s): %s", symbol, exc)
             return None
-        except Exception as exc:  # noqa: BLE001 — پایپ‌لاین نباید به‌خاطر کدال بشکند
+        except Exception as exc:  # noqa: BLE001
             logger.warning("خطای غیرمنتظره کدال: %s", exc)
             return None
 
-    def analyze_symbol(self, ticker: str, market: str = "stock", timeframe: str = "1d") -> Recommendation:
+    def _fetch_series(
+        self,
+        symbol: Symbol,
+        timeframe: str,
+        *,
+        limit: int = 200,
+        force_refresh: bool = False,
+    ):
+        ttl = self._cache_ttl(timeframe)
+        cache_cfg = self.settings.app.get("storage", {}).get("cache", {})
+        enforce_min = bool(cache_cfg.get("enforce_min_candles", True))
+
+        if force_refresh:
+            cache_metrics.record_force_refresh()
+            logger.info("cache BYPASS force_refresh %s", symbol)
+        elif ttl > 0:
+            lookup = self.store.get(
+                symbol,
+                timeframe,
+                ttl_seconds=ttl,
+                min_candles=limit if enforce_min else None,
+            )
+            if lookup.fresh and lookup.series is not None:
+                logger.info(
+                    "cache HIT fresh %s candles=%d",
+                    symbol,
+                    len(lookup.series.candles),
+                )
+                return lookup.series, "cache"
+            logger.info(
+                "cache %s %s reason=%s",
+                "HIT" if lookup.hit else "MISS",
+                symbol,
+                lookup.reason,
+            )
+
+        provider = self._provider_for_market(symbol.market)
+        series = provider.fetch_ohlcv(symbol, timeframe=timeframe, limit=limit)
+        self.store.save(series)
+        return series, "provider"
+
+    def analyze_symbol(
+        self,
+        ticker: str,
+        market: str = "stock",
+        timeframe: str = "1d",
+        *,
+        force_refresh: bool = False,
+        limit: int = 200,
+    ) -> Recommendation:
         market = self._assert_market(market)
         symbol = Symbol(ticker=ticker, market=market)
 
-        provider = self._provider_for_market(market)
-        series = provider.fetch_ohlcv(symbol, timeframe=timeframe, limit=200)
-        self.store.save(series)
-        df = series.to_dataframe()
+        series, source = self._fetch_series(
+            symbol, timeframe, limit=limit, force_refresh=force_refresh
+        )
+        logger.debug("OHLCV source=%s for %s", source, symbol)
 
+        df = series.to_dataframe()
         indicator_results = self.indicator_engine.run(df)
         technical_section = self.technical_analyzer.analyze(indicator_results)
         section_scores = [technical_section]
@@ -142,11 +194,9 @@ class AryaApp:
             section_scores=section_scores,
         )
 
-        # دلایل کدال را به لیست reasons اضافه کن (اگر موتور پیشنهاد نگذاشته باشد)
         if codal_section and codal_section.details.get("reasons"):
-            extra = list(codal_section.details["reasons"])
             existing = set(recommendation.reasons)
-            for r in extra:
+            for r in codal_section.details["reasons"]:
                 if r not in existing:
                     recommendation.reasons.append(r)
 
@@ -157,15 +207,13 @@ class AryaApp:
 
     def evaluate_market_filter(self, ticker: str, market: str = "stock", timeframe: str = "1d") -> FilterResult:
         market = self._assert_market(market)
-        provider = self._provider_for_market(market)
-        series = provider.fetch_ohlcv(Symbol(ticker=ticker, market=market), timeframe=timeframe, limit=200)
+        series, _ = self._fetch_series(Symbol(ticker=ticker, market=market), timeframe)
         cfg = MarketFilterConfig(**self.settings.filters.get("market_watch", {}))
         return scan_ohlcv(series.to_dataframe(), cfg)
 
     def evaluate_strategy(self, ticker: str, market: str = "stock", timeframe: str = "1d") -> StrategySignal:
         market = self._assert_market(market)
-        provider = self._provider_for_market(market)
-        series = provider.fetch_ohlcv(Symbol(ticker=ticker, market=market), timeframe=timeframe, limit=200)
+        series, _ = self._fetch_series(Symbol(ticker=ticker, market=market), timeframe)
         cfg = self.settings.filters.get("strategy", {})
         cfg = {k: v for k, v in cfg.items() if k != "name"}
         return trend_momentum_signal(series.to_dataframe(), **cfg)
@@ -174,8 +222,10 @@ class AryaApp:
         return self.fundamental_analyzer.analyze(metrics)
 
     def fetch_codal_letters(self, ticker: str, limit: int = 10):
-        """دسترسی مستقیم به اطلاعیه‌های کدال برای یک نماد."""
         provider = self._codal_provider()
         if provider is None:
             raise CodalProviderError("کدال در providers.yaml غیرفعال است")
         return provider.fetch_recent(to_codal_symbol(ticker), limit=limit)
+
+    def cache_stats(self):
+        return cache_metrics.snapshot()
