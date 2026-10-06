@@ -1,4 +1,4 @@
-"""CLI — بورس ایران."""
+"""CLI — بورس ایران + ایجنت‌ها + مغز دوم."""
 from __future__ import annotations
 
 import argparse
@@ -14,18 +14,24 @@ from arya.cli.client_type_command import register_client_type_parser, run_client
 from arya.cli.instrument_command import register_instrument_parser, run_instrument
 from arya.cli.manual_command import register_manual_parser, run_manual
 from arya.cli.strategy_command import register_strategy_parser, run_strategy
+from arya.cli.brain_command import (
+    register_brain_parser,
+    register_research_parser,
+    run_brain,
+    run_research,
+)
 from arya.providers.market.ticker_map import to_tse_symbol
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="arya",
-        description="ARYA AI Trader — بورس ایران (نماد فارسی)",
+        description="ARYA AI Trader — بورس ایران",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
     analyze_p = sub.add_parser("analyze", help="تحلیل یک نماد بورسی")
-    analyze_p.add_argument("--ticker", required=True, help="نماد فارسی")
+    analyze_p.add_argument("--ticker", required=True)
     analyze_p.add_argument("--market", default="stock", choices=["stock"])
     analyze_p.add_argument("--timeframe", default="1d")
     analyze_p.add_argument("--force-refresh", action="store_true")
@@ -52,6 +58,8 @@ def build_parser() -> argparse.ArgumentParser:
     register_instrument_parser(sub)
     register_manual_parser(sub)
     register_strategy_parser(sub)
+    register_brain_parser(sub)
+    register_research_parser(sub)
     return parser
 
 
@@ -72,6 +80,10 @@ def main(argv: list[str] | None = None) -> int:
         return run_manual(args, console)
     if args.command == "strategy":
         return run_strategy(args, console)
+    if args.command == "brain":
+        return run_brain(args, console)
+    if args.command == "research":
+        return run_research(args, console)
 
     app = AryaApp()
 
@@ -117,11 +129,6 @@ def main(argv: list[str] | None = None) -> int:
                 render_recommendation(rec, console)
             except Exception as exc:  # noqa: BLE001
                 console.print(f"[red]{s.ticker}: {exc}[/red]")
-        snap = app.cache_stats()
-        console.print(
-            f"[dim]cache hit_ratio={snap.hit_ratio:.1%} hits={snap.hits} "
-            f"misses={snap.misses} stale={snap.stale}[/dim]"
-        )
 
     elif args.command == "cache-stats":
         snap = app.cache_stats()
