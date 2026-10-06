@@ -1,0 +1,77 @@
+# استراتژی‌های قابل تنظیم — اعداد هر شرط را اینجا عوض کنید.
+# سپس: arya strategy scan --profile نام_پروفایل
+
+default_profile: trend_rsi_balanced
+
+profiles:
+  # روند صعودی + RSI نه اشباع خرید
+  trend_rsi_balanced:
+    description: "EMA سریع بالای کند + RSI بین ۳۰ و ۷۰"
+    action_when_pass: buy
+    min_candles: 60
+    rules:
+      - id: ema_trend
+        type: ema_cross
+        fast: 20
+        slow: 50
+        condition: fast_above_slow   # fast_above_slow | fast_below_slow
+      - id: rsi_band
+        type: rsi
+        period: 14
+        min: 30
+        max: 70
+
+  # اشباع فروش RSI + روند هنوز نزولی (بازگشت احتمالی)
+  rsi_oversold_bounce:
+    description: "RSI زیر ۳۰ (اشباع فروش)"
+    action_when_pass: buy
+    min_candles: 30
+    rules:
+      - id: rsi_os
+        type: rsi
+        period: 14
+        max: 30
+
+  # اشباع خرید — فیلتر احتیاطی / فروش
+  rsi_overbought:
+    description: "RSI بالای ۷۰"
+    action_when_pass: sell
+    min_candles: 30
+    rules:
+      - id: rsi_ob
+        type: rsi
+        period: 14
+        min: 70
+
+  # مومنتوم قوی: روند + RSI بالای ۵۰ + حجم بالاتر از میانگین
+  momentum_volume:
+    description: "روند صعودی + RSI>50 + حجم > ۱.۵× میانگین ۲۰ روزه"
+    action_when_pass: buy
+    min_candles: 60
+    rules:
+      - id: ema_trend
+        type: ema_cross
+        fast: 10
+        slow: 30
+        condition: fast_above_slow
+      - id: rsi_mom
+        type: rsi
+        period: 14
+        min: 50
+      - id: vol
+        type: volume_ratio
+        period: 20
+        min_ratio: 1.5
+
+  # MACD ساده (خط MACD بالای سیگنال)
+  macd_bullish:
+    description: "MACD بالای خط سیگنال"
+    action_when_pass: buy
+    min_candles: 40
+    rules:
+      - id: macd
+        type: macd
+        fast: 12
+        slow: 26
+        signal: 9
+        condition: macd_above_signal
