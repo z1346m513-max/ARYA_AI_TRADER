@@ -1,5 +1,5 @@
 """
-Bootstrap: پایپ‌لاین ARYA — تکنیکال + smart_money + بنیادی TSETMC + کدال.
+Bootstrap: تکنیکال + smart_money + بنیادی TSETMC + کدال (API یا دستی).
 """
 from __future__ import annotations
 
@@ -22,6 +22,7 @@ from arya.providers.base import ProviderRegistry
 import arya.providers.market.mock_provider  # noqa: F401
 import arya.providers.market.tsetmc_provider  # noqa: F401
 from arya.providers.codal import CodalProvider, CodalProviderError
+from arya.providers.codal.manual_store import ManualCodalStore
 from arya.providers.codal.symbol_map import to_codal_symbol
 from arya.providers.market.client_type_provider import (
     ClientTypeProvider,
@@ -62,6 +63,7 @@ class AryaApp:
         self.risk_manager = RiskManager()
         self.recommendation_engine = RecommendationEngine()
         self._codal: CodalProvider | None = None
+        self.manual_codal = ManualCodalStore()
 
         symbols_path = (
             self.settings.app.get("paths", {}).get("symbols")
@@ -121,19 +123,38 @@ class AryaApp:
         return self._codal
 
     def _codal_section(self, ticker: str):
-        provider = self._codal_provider()
-        if provider is None:
-            return None
+        """اول API کدال؛ اگر شکست → رویدادهای دستی."""
         symbol = to_codal_symbol(ticker)
-        try:
-            letters = provider.fetch_recent(symbol, limit=10)
-            return self.codal_event_analyzer.analyze(letters)
-        except CodalProviderError as exc:
-            logger.warning("کدال در دسترس نیست (%s): %s", symbol, exc)
-            return None
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("خطای غیرمنتظره کدال: %s", exc)
-            return None
+        provider = self._codal_provider()
+        if provider is not None:
+            try:
+                letters = provider.fetch_recent(symbol, limit=10)
+                if letters:
+                    section = self.codal_event_analyzer.analyze(letters)
+                    section.details["source"] = "codal_api"
+                    return section
+            except CodalProviderError as exc:
+                logger.warning("کدال API ناموفق (%s): %s — تلاش برای داده دستی", symbol, exp if False else exc)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("خطای کدال: %s — تلاش برای داده دستی", exc)
+
+        manual_letters = self.manual_codal.letters_for(ticker)
+        if manual_letters:
+            logger.info("استفاده از %d رویداد دستی کدال برای %s", len(manual_letters), ticker)
+            section = self.codal_event_analyzer.analyze(manual_letters)
+            section.details["source"] = "manual"
+            section.details.setdefault("reasons", []).insert(
+                0, f"منبع کدال: ورود دستی ({len(manual_letters)} مورد)"
+            )
+            return section
+
+        logger.info(
+            "کدال در دسترس نیست و داده دستی برای %s نیست. "
+            "دستور: python -m arya.cli.main manual needs --ticker %s",
+            ticker,
+            ticker,
+        )
+        return None
 
     def _smart_money_section(self, ticker: str):
         try:
@@ -143,7 +164,7 @@ class AryaApp:
             logger.warning("ClientType در دسترس نیست (%s): %s", ticker, exp if False else exc)
             return None
         except Exception as exc:  # noqa: BLE001
-            logger.warning("خطای smart_money: %s", exc)
+            logger.warning("خطای smart_money: %s", exp if False else exc)
             return None
 
     def _fundamental_section(self, ticker: str):
@@ -152,11 +173,11 @@ class AryaApp:
                 to_tse_symbol(ticker), with_orderbook=False
             )
             return self.tsetmc_fundamental_analyzer.analyze(detail)
-        except InstrumentDetailError as exc:
-            logger.warning("جزئیات نماد برای بنیادی در دسترس نیست: %s", exc)
+        except InstrumentDetailError as exp:
+            logger.warning("جزئیات نماد برای بنیادی در دسترس نیست: %s", exp)
             return None
         except Exception as exc:  # noqa: BLE001
-            logger.warning("خطای بنیادی TSETMC: %s", exc)
+            logger.warning("خطای بنیادی TSETMC: %s", exp if False else exc)
             return None
 
     def _fetch_series(

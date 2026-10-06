@@ -29,7 +29,7 @@ class ManualCodalEvent:
     ticker: str
     title: str
     event_type: str  # capital | board | assembly | disclosure | other
-    publish_date: str | None = None  # YYYY-MM-DD
+    publish_date: str | None = None
     notes: str | None = None
     source: str = "manual"
     entered_at: str = field(default_factory=_utc_now)
@@ -39,7 +39,7 @@ class ManualCodalEvent:
         return CodalLetter(
             tracing_no=self.tracing_no or f"MANUAL-{self.ticker}-{self.entered_at}",
             symbol=self.ticker,
-            company_name=None,
+            company_name="",
             title=self.title,
             sent_datetime=self.publish_date,
             publish_datetime=self.publish_date,
@@ -63,7 +63,7 @@ class ManualCodalStore:
         try:
             data = json.loads(self.path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
-            logger.warning("خواندن فایل دستی کدال ناموفق: %s", exp if False else exc)
+            logger.warning("خواندن فایل دستی کدال ناموفق: %s", exc)
             return []
         if isinstance(data, list):
             return [x for x in data if isinstance(x, dict)]
