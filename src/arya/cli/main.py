@@ -1,13 +1,12 @@
 """
-CLI — بورس ایران + کدال + سهامداران + حقیقی/حقوقی + Cache + Symbol Master.
+CLI — بورس ایران.
 
 نمونه:
+    arya instrument --ticker فولاد
     arya analyze --ticker FOOLAD
     arya codal --symbol فولاد --event capital
-    arya codal --symbol فولاد --event board
-    arya shareholders --changes
     arya client-type --ticker فولاد
-    arya cache-stats
+    arya shareholders --changes
 """
 from __future__ import annotations
 
@@ -21,6 +20,7 @@ from arya.dashboard.console_dashboard import render_recommendation
 from arya.cli.codal_command import register_codal_parser, run_codal
 from arya.cli.shareholder_command import register_shareholder_parser, run_shareholders
 from arya.cli.client_type_command import register_client_type_parser, run_client_type
+from arya.cli.instrument_command import register_instrument_parser, run_instrument
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -54,6 +54,7 @@ def build_parser() -> argparse.ArgumentParser:
     register_codal_parser(sub)
     register_shareholder_parser(sub)
     register_client_type_parser(sub)
+    register_instrument_parser(sub)
     return parser
 
 
@@ -68,6 +69,8 @@ def main(argv: list[str] | None = None) -> int:
         return run_shareholders(args, console)
     if args.command == "client-type":
         return run_client_type(args, console)
+    if args.command == "instrument":
+        return run_instrument(args, console)
 
     app = AryaApp()
 
