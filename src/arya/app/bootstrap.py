@@ -1,5 +1,5 @@
 """
-Bootstrap: پایپ‌لاین ARYA — بورس ایران + کدال + Cache-First + Symbol Master.
+Bootstrap: پایپ‌لاین ARYA — تکنیکال + smart_money + بنیادی TSETMC + کدال.
 """
 from __future__ import annotations
 
@@ -8,7 +8,9 @@ from pathlib import Path
 
 from arya.analysis.analyzers.codal_event_analyzer import CodalEventAnalyzer
 from arya.analysis.analyzers.fundamental_analyzer import FundamentalAnalyzer
+from arya.analysis.analyzers.smart_money_analyzer import SmartMoneyAnalyzer
 from arya.analysis.analyzers.technical_analyzer import TechnicalAnalyzer
+from arya.analysis.analyzers.tsetmc_fundamental_analyzer import TsetmcFundamentalAnalyzer
 from arya.analysis.recommendation.recommendation_engine import RecommendationEngine
 from arya.analysis.scoring.scoring_engine import ScoringEngine
 from arya.ai.reasoning.decision_engine import RuleBasedDecisionEngine
@@ -21,6 +23,15 @@ import arya.providers.market.mock_provider  # noqa: F401
 import arya.providers.market.tsetmc_provider  # noqa: F401
 from arya.providers.codal import CodalProvider, CodalProviderError
 from arya.providers.codal.symbol_map import to_codal_symbol
+from arya.providers.market.client_type_provider import (
+    ClientTypeProvider,
+    ClientTypeProviderError,
+)
+from arya.providers.market.instrument_detail import (
+    InstrumentDetailError,
+    InstrumentDetailProvider,
+)
+from arya.providers.market.ticker_map import to_tse_symbol
 from arya.risk.risk_manager import RiskManager
 from arya.storage.cache import OHLCVStore
 from arya.storage.cache_metrics import cache_metrics
@@ -43,6 +54,8 @@ class AryaApp:
         self.indicator_engine = IndicatorEngine(self.settings)
         self.technical_analyzer = TechnicalAnalyzer()
         self.fundamental_analyzer = FundamentalAnalyzer()
+        self.tsetmc_fundamental_analyzer = TsetmcFundamentalAnalyzer()
+        self.smart_money_analyzer = SmartMoneyAnalyzer()
         self.codal_event_analyzer = CodalEventAnalyzer()
         self.scoring_engine = ScoringEngine(self.settings)
         self.decision_engine = RuleBasedDecisionEngine()
@@ -122,6 +135,30 @@ class AryaApp:
             logger.warning("خطای غیرمنتظره کدال: %s", exc)
             return None
 
+    def _smart_money_section(self, ticker: str):
+        try:
+            snap = ClientTypeProvider().fetch_latest(to_tse_symbol(ticker))
+            return self.smart_money_analyzer.analyze(snap)
+        except ClientTypeProviderError as exc:
+            logger.warning("ClientType در دسترس نیست (%s): %s", ticker, exp if False else exc)
+            return None
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("خطای smart_money: %s", exc)
+            return None
+
+    def _fundamental_section(self, ticker: str):
+        try:
+            detail = InstrumentDetailProvider().fetch(
+                to_tse_symbol(ticker), with_orderbook=False
+            )
+            return self.tsetmc_fundamental_analyzer.analyze(detail)
+        except InstrumentDetailError as exc:
+            logger.warning("جزئیات نماد برای بنیادی در دسترس نیست: %s", exc)
+            return None
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("خطای بنیادی TSETMC: %s", exc)
+            return None
+
     def _fetch_series(
         self,
         symbol: Symbol,
@@ -173,6 +210,7 @@ class AryaApp:
         limit: int = 200,
     ) -> Recommendation:
         market = self._assert_market(market)
+        ticker = to_tse_symbol(ticker)
         meta = self.symbol_master.get(ticker)
         symbol = Symbol(
             ticker=ticker,
@@ -190,6 +228,14 @@ class AryaApp:
         indicator_results = self.indicator_engine.run(df)
         technical_section = self.technical_analyzer.analyze(indicator_results)
         section_scores = [technical_section]
+
+        smart_section = self._smart_money_section(ticker)
+        if smart_section is not None:
+            section_scores.append(smart_section)
+
+        fund_section = self._fundamental_section(ticker)
+        if fund_section is not None:
+            section_scores.append(fund_section)
 
         codal_section = self._codal_section(ticker)
         if codal_section is not None:
@@ -211,11 +257,12 @@ class AryaApp:
         if meta and meta.industry:
             recommendation.reasons.insert(0, f"صنعت: {meta.industry}")
 
-        if codal_section and codal_section.details.get("reasons"):
-            existing = set(recommendation.reasons)
-            for r in codal_section.details["reasons"]:
-                if r not in existing:
-                    recommendation.reasons.append(r)
+        for sec in (smart_section, fund_section, codal_section):
+            if sec and sec.details.get("reasons"):
+                existing = set(recommendation.reasons)
+                for r in sec.details["reasons"]:
+                    if r not in existing:
+                        recommendation.reasons.append(r)
 
         return recommendation
 
