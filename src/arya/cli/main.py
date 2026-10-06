@@ -1,11 +1,4 @@
-"""
-CLI — بورس ایران (نماد فارسی).
-
-نمونه:
-    arya manual needs --ticker فولاد
-    arya manual add --ticker فولاد --event capital --title "..." --date 2025-01-01
-    arya analyze --ticker فولاد
-"""
+"""CLI — بورس ایران."""
 from __future__ import annotations
 
 import argparse
@@ -20,6 +13,7 @@ from arya.cli.shareholder_command import register_shareholder_parser, run_shareh
 from arya.cli.client_type_command import register_client_type_parser, run_client_type
 from arya.cli.instrument_command import register_instrument_parser, run_instrument
 from arya.cli.manual_command import register_manual_parser, run_manual
+from arya.cli.strategy_command import register_strategy_parser, run_strategy
 from arya.providers.market.ticker_map import to_tse_symbol
 
 
@@ -31,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     analyze_p = sub.add_parser("analyze", help="تحلیل یک نماد بورسی")
-    analyze_p.add_argument("--ticker", required=True, help="نماد فارسی، مثلاً فولاد")
+    analyze_p.add_argument("--ticker", required=True, help="نماد فارسی")
     analyze_p.add_argument("--market", default="stock", choices=["stock"])
     analyze_p.add_argument("--timeframe", default="1d")
     analyze_p.add_argument("--force-refresh", action="store_true")
@@ -43,7 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("list-industries", help="لیست صنایع")
 
-    scan_p = sub.add_parser("scan", help="اسکن نمادها")
+    scan_p = sub.add_parser("scan", help="اسکن ساده تحلیل")
     scan_p.add_argument("--market", default="stock", choices=["stock"])
     scan_p.add_argument("--timeframe", default="1d")
     scan_p.add_argument("--force-refresh", action="store_true")
@@ -57,6 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
     register_client_type_parser(sub)
     register_instrument_parser(sub)
     register_manual_parser(sub)
+    register_strategy_parser(sub)
     return parser
 
 
@@ -75,6 +70,8 @@ def main(argv: list[str] | None = None) -> int:
         return run_instrument(args, console)
     if args.command == "manual":
         return run_manual(args, console)
+    if args.command == "strategy":
+        return run_strategy(args, console)
 
     app = AryaApp()
 
