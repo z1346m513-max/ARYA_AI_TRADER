@@ -13,12 +13,13 @@ from __future__ import annotations
 import logging
 
 from arya.analysis.analyzers.technical_analyzer import TechnicalAnalyzer
-from arya.analysis.analyzers.fundamental_analyzer import FundamentalAnalyzer
+from arya.analysis.analyzers.fundamental_analyzer import FundamentalAnalyzer, FundamentalThresholds
 from arya.analysis.recommendation.recommendation_engine import RecommendationEngine
 from arya.analysis.scoring.scoring_engine import ScoringEngine
 from arya.ai.reasoning.decision_engine import RuleBasedDecisionEngine
 from arya.config.settings import Settings
-from arya.models.analysis_result import Recommendation
+from arya.fundamental.models import FinancialData
+from arya.models.analysis_result import Recommendation, SectionScore
 from arya.models.fundamentals import FundamentalMetrics
 from arya.models.market_data import Symbol
 from arya.providers.base import ProviderRegistry
@@ -66,7 +67,30 @@ class AryaApp:
                     kwargs[{"timeout_seconds": "timeout"}.get(key, key)] = cfg[key]
         return ProviderRegistry.create(driver, **kwargs)
 
-    def analyze_symbol(self, ticker: str, market: str = "stock", timeframe: str = "1d") -> Recommendation:
+    def analyze_fundamentals(self, metrics: FundamentalMetrics) -> SectionScore:
+        """تحلیل نسبت‌های بنیادی تزریق‌شده از Codal یا منبع معتبر دیگر."""
+        return self.fundamental_analyzer.analyze(metrics)
+
+    def analyze_financial_data(self, data: FinancialData) -> SectionScore:
+        """
+        تحلیل بنیادی با FinancialData کامل و ۱۹ نسبت مالی.
+
+        این متد مسیر ۱۹ نسبتی را فعال می‌کند: ۹ نسبت امتیازدهی‌شده و ۱۰ اطلاعاتی.
+        برای داده‌ی کامل، quality برابر usable می‌شود و در pipeline امتیازدهی کلی
+        استفاده می‌شود.
+
+        Args:
+            data: داده‌ی بنیادی کامل (ترازنامه + صورت سود و زیان + بازار).
+
+        Returns:
+            SectionScore شامل امتیاز، اطمینان و جزئیات ۱۹ نسبت.
+        """
+        return self.fundamental_analyzer.analyze_financial_data(data)
+
+    def analyze_symbol(
+        self, ticker: str, market: str = "stock", timeframe: str = "1d",
+        financial_data: FinancialData | None = None,
+    ) -> Recommendation:
         """اجرای کامل پایپ‌لاین برای یک نماد و برگرداندن Recommendation نهایی."""
         symbol = Symbol(ticker=ticker, market=market)
 
@@ -82,9 +106,14 @@ class AryaApp:
         # 3) Indicator Engine
         indicator_results = self.indicator_engine.run(df)
 
-        # 4) Analysis Engine (فعلا فقط بخش technical پیاده‌سازی شده)
+        # 4) Analysis Engine
         technical_section = self.technical_analyzer.analyze(indicator_results)
         section_scores = [technical_section]
+
+        # 4b) Fundamental Analysis (اگر داده‌ی بنیادی موجود باشد)
+        if financial_data is not None:
+            fundamental_section = self.analyze_financial_data(financial_data)
+            section_scores.append(fundamental_section)
 
         # 5) Scoring Engine
         overall_score, overall_confidence, section_scores = self.scoring_engine.combine(section_scores)
@@ -123,7 +152,3 @@ class AryaApp:
         cfg = self.settings.filters.get("strategy", {})
         cfg = {k: v for k, v in cfg.items() if k != "name"}
         return trend_momentum_signal(series.to_dataframe(), **cfg)
-
-    def analyze_fundamentals(self, metrics: FundamentalMetrics):
-        """تحلیل نسبت‌های بنیادی تزریق‌شده از Codal یا منبع معتبر دیگر."""
-        return self.fundamental_analyzer.analyze(metrics)
