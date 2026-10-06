@@ -1,26 +1,42 @@
 [project]
 name = "arya-ai-trader"
-version = "0.1.0+milestone1"
-description = "ARYA AI Trader - multi-market technical/fundamental/AI analysis platform"
-requires-python = ">=3.10"
+version = "0.2.0-tse-codal"
+description = "ARYA AI Trader — بورس ایران، کدال، TSETMC"
+readme = "README.md"
+requires-python = ">=3.10,<3.16"
 dependencies = [
-    "pandas>=2.0",
-    "numpy>=1.24",
-    "pyyaml>=6.0",
-    "pydantic>=2.0",
-    "rich>=13.0",
+    "pandas>=2.2.0",
+    "numpy>=2.0.0",
+    "pyyaml>=6.0.1",
+    "pydantic>=2.7.0",
+    "rich>=13.7.0",
 ]
 
 [project.optional-dependencies]
-gui = ["PySide6>=6.5"]
-dev = ["pytest>=7.0", "pytest-cov"]
+gui = ["PySide6>=6.6"]
+dev = ["pytest>=8.0", "pytest-cov>=5.0"]
 
 [project.scripts]
 arya = "arya.cli.main:main"
 
+[project.classifiers]
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+
 [build-system]
-requires = ["setuptools>=68", "wheel"]
+requires = ["setuptools>=75", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
