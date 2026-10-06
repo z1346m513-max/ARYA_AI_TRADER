@@ -328,6 +328,32 @@ def test_debt_to_equity(full_data):
     assert result.value == pytest.approx(15_000_000_000.0 / 50_000_000_000.0)
 
 
+def test_ps_with_zero_revenue():
+    data = FinancialData(
+        market_price=10000.0, revenue=0.0, shares_outstanding=1_000_000.0,
+    )
+    result = price_to_sales(data)
+    assert result.status == "NOT_MEANINGFUL"
+    assert result.value is None
+
+
+def test_debt_to_asset_with_zero_debt():
+    data = FinancialData(debt=0.0, total_assets=80_000_000.0)
+    result = debt_to_asset(data)
+    assert result.status == "OK"
+    assert result.value == 0.0
+
+
+def test_roe_with_zero_avg_equity_not_fallback():
+    """اگر avg_equity=0 باشد، نباید به equity برگردد؛ باید NOT_MEANINGFUL شود."""
+    data = FinancialData(
+        net_income=6_000_000.0, avg_equity=0.0, equity=50_000_000.0,
+    )
+    result = return_on_equity(data)
+    assert result.status == "NOT_MEANINGFUL"
+    assert result.value is None
+
+
 def test_debt_to_equity_fallback_to_total_liabilities():
     data = FinancialData(
         total_liabilities=30_000_000.0, equity=50_000_000.0,
@@ -470,3 +496,35 @@ def test_ratio_result_is_immutable():
     )
     with pytest.raises(Exception):
         result.value = 2.0
+
+
+# ─── Bridge Tests ───────────────────────────────────────────
+
+def test_from_metrics_bridge():
+    """تبدیل FundamentalMetrics به FinancialData."""
+    from arya.models.fundamentals import FundamentalMetrics
+
+    metrics = FundamentalMetrics(
+        eps=6000.0,
+        revenue=50_000_000_000.0,
+        net_income=6_000_000_000.0,
+        market_price=10000.0,
+        book_value_per_share=50000.0,
+        dividend_per_share=2000.0,
+        debt=15_000_000_000.0,
+        equity=50_000_000_000.0,
+        current_assets=20_000_000_000.0,
+        current_liabilities=10_000_000_000.0,
+    )
+    data = FinancialData.from_metrics(metrics)
+    assert data.market_price == 10000.0
+    assert data.eps == 6000.0
+    assert data.revenue == 50_000_000_000.0
+
+    # نسبت‌ها قابل محاسبه هستند
+    results = calculate_all_ratios(data)
+    assert results["pe"].status == "OK"
+    assert results["pb"].status == "OK"
+    assert results["net_margin"].status == "OK"
+    assert results["debt_to_equity"].status == "OK"
+    assert results["current_ratio"].status == "OK"

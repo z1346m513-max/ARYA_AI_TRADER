@@ -12,6 +12,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from arya.models.fundamentals import FundamentalMetrics
 
 
 @dataclass(frozen=True)
@@ -81,3 +85,24 @@ class FinancialData:
         if self.market_price is not None and self.shares_outstanding is not None:
             return self.market_price * self.shares_outstanding
         return None
+
+    @classmethod
+    def from_metrics(cls, metrics: "FundamentalMetrics") -> "FinancialData":
+        """
+        از FundamentalMetrics موجود در arya.models.fundamentals تبدیل می‌کند.
+
+        این متد اجازه می‌دهد کدهای موجود که از FundamentalMetrics استفاده می‌کنند،
+        بدون تغییر به نسبت‌های جدید دسترسی داشته باشند.
+        """
+        return cls(
+            market_price=metrics.market_price,
+            eps=metrics.eps,
+            revenue=metrics.revenue,
+            net_income=metrics.net_income,
+            book_value_per_share=metrics.book_value_per_share,
+            dividend_per_share=metrics.dividend_per_share,
+            debt=metrics.debt,
+            equity=metrics.equity,
+            current_assets=metrics.current_assets,
+            current_liabilities=metrics.current_liabilities,
+        )

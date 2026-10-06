@@ -5,13 +5,13 @@
 کاربر موجود هستند. هر نسبت یک RatioResult برمی‌گرداند که شامل مقدار، فرمول،
 وضعیت و هشدارهاست.
 
-دسته‌بندی نسبت‌ها:
-- ارزش بازار: P/E، P/BV، P/S، P/CF، PEG
-- سودآوری: حاشیه سود ناخالص، حاشیه سود خالص، ROE، ROA
-- نقدینگی: نسبت جاری، نسبت آنی، نسبت نقد
-- اهرمی: بدهی به حقوق صاحبان سهام، بدهی به دارایی، پوشش هزینه بهره
-- کارایی: گردش موجودی، گردش دارایی ثابت، دوره وصول مطالبات
-- تقسیم سود: نسبت پرداخت سود سهام
+دسته‌بندی نسبت‌ها (۱۹ نسبت):
+- ارزش بازار (۵): P/E، P/BV، P/S، P/CF، PEG
+- سودآوری (۴): حاشیه سود ناخالص، حاشیه سود خالص، ROE، ROA
+- نقدینگی (۳): نسبت جاری، نسبت آنی، نسبت نقد
+- اهرمی (۳): بدهی به حقوق صاحبان سهام، بدهی به دارایی، پوشش هزینه بهره
+- کارایی (۳): گردش موجودی، گردش دارایی ثابت، دوره وصول مطالبات
+- تقسیم سود (۱): نسبت پرداخت سود سهام
 
 قواعد:
 - تقسیم بر صفر یا داده ناقص: value=None، status=UNAVAILABLE
@@ -68,6 +68,11 @@ def _safe_div(
     if denominator == 0:
         return None, True
     return numerator / denominator, False
+
+
+def _coalesce(primary: float | None, fallback: float | None) -> float | None:
+    """اگر primary برابر None نباشد، آن را برمی‌گرداند؛ در غیر این صورت fallback."""
+    return primary if primary is not None else fallback
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -143,12 +148,19 @@ def price_to_sales(data: FinancialData) -> RatioResult:
     warnings: list[str] = []
     # مسیر per-share: قیمت / (فروش / تعداد سهم)
     if data.market_price is not None and data.revenue is not None and data.shares_outstanding is not None:
-        if data.shares_outstanding > 0:
+        if data.shares_outstanding > 0 and data.revenue > 0:
             sales_per_share = data.revenue / data.shares_outstanding
             value = data.market_price / sales_per_share
             return RatioResult(
                 key="ps", name="نسبت قیمت به فروش (P/S)", category="market_value",
                 value=value, formula="قیمت بازار / فروش هر سهم", status="OK",
+            )
+        elif data.revenue is not None and data.revenue <= 0:
+            return RatioResult(
+                key="ps", name="نسبت قیمت به فروش (P/S)", category="market_value",
+                value=None, formula="قیمت بازار / فروش هر سهم",
+                status="NOT_MEANINGFUL",
+                warnings=["فروش صفر یا منفی است."],
             )
     # مسیر market-cap
     mc = data.market_cap_value
@@ -277,7 +289,7 @@ def net_profit_margin(data: FinancialData) -> RatioResult:
 
 def return_on_equity(data: FinancialData) -> RatioResult:
     """ROE = سود خالص / حقوق صاحبان سهام"""
-    equity = data.avg_equity or data.equity
+    equity = _coalesce(data.avg_equity, data.equity)
     warnings: list[str] = []
     if data.avg_equity is None and data.equity is not None:
         warnings.append("از مقدار پایان دوره استفاده شد؛ میانگین موجود نیست.")
@@ -303,7 +315,7 @@ def return_on_equity(data: FinancialData) -> RatioResult:
 
 def return_on_assets(data: FinancialData) -> RatioResult:
     """ROA = سود خالص / کل دارایی‌ها"""
-    assets = data.avg_total_assets or data.total_assets
+    assets = _coalesce(data.avg_total_assets, data.total_assets)
     warnings: list[str] = []
     if data.avg_total_assets is None and data.total_assets is not None:
         warnings.append("از مقدار پایان دوره استفاده شد؛ میانگین موجود نیست.")
@@ -435,7 +447,7 @@ def debt_to_equity(data: FinancialData) -> RatioResult:
 
 def debt_to_asset(data: FinancialData) -> RatioResult:
     """بدهی به دارایی = کل بدهی / کل دارایی‌ها"""
-    debt = data.debt or data.total_liabilities
+    debt = _coalesce(data.debt, data.total_liabilities)
     value, zero_div = _safe_div(debt, data.total_assets)
     if value is None and zero_div:
         return RatioResult(
@@ -490,7 +502,7 @@ def interest_coverage(data: FinancialData) -> RatioResult:
 
 def inventory_turnover(data: FinancialData) -> RatioResult:
     """گردش موجودی = بهای تمام‌شده / میانگین موجودی"""
-    inv = data.avg_inventory or data.inventory
+    inv = _coalesce(data.avg_inventory, data.inventory)
     warnings: list[str] = []
     if data.avg_inventory is None and data.inventory is not None:
         warnings.append("از مقدار پایان دوره استفاده شد؛ میانگین موجود نیست.")
@@ -516,7 +528,7 @@ def inventory_turnover(data: FinancialData) -> RatioResult:
 
 def fixed_asset_turnover(data: FinancialData) -> RatioResult:
     """گردش دارایی ثابت = فروش / میانگین دارایی ثابت"""
-    fa = data.avg_fixed_assets or data.fixed_assets
+    fa = _coalesce(data.avg_fixed_assets, data.fixed_assets)
     warnings: list[str] = []
     if data.avg_fixed_assets is None and data.fixed_assets is not None:
         warnings.append("از مقدار پایان دوره استفاده شد؛ میانگین موجود نیست.")
@@ -545,7 +557,7 @@ def fixed_asset_turnover(data: FinancialData) -> RatioResult:
 
 def receivables_collection_period(data: FinancialData) -> RatioResult:
     """دوره وصول مطالبات = (میانگین مطالبات / فروش) × ۳۶۵"""
-    rec = data.avg_receivables or data.receivables
+    rec = _coalesce(data.avg_receivables, data.receivables)
     warnings: list[str] = []
     if data.avg_receivables is None and data.receivables is not None:
         warnings.append("از مقدار پایان دوره استفاده شد؛ میانگین موجود نیست.")
