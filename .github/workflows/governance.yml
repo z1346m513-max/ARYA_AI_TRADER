@@ -1,0 +1,24 @@
+name: ARYA Governance Gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verify mandatory governance files and PR evidence
+        run: python scripts/verify_governance.py
+      - name: Install project
+        run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+      - name: Compile Python
+        run: python -m compileall -q src tests scripts
+      - name: Run tests
+        run: pytest -q
