@@ -7,6 +7,16 @@
 |---|---|---|---|
 | Drive-1 | https://drive.google.com/drive/folders/1QS-0UJX2Hqwv_gEa0XTSuVJVu9pVouaW | در محیط فعلی غیرقابل دسترسی | UNVERIFIED |
 | Drive-2 | https://drive.google.com/drive/folders/1p-mjgJI1IdPRf-j3olrvL8c--1-7XvlL | در محیط فعلی غیرقابل دسترسی | UNVERIFIED |
+| Drive-User-Provided | https://drive.google.com/drive/folders/1VV4bepF0i33q-4pco15BvMSCmeDBEh4h | در نشست 2026-10-10 با Drive API خوانده شد؛ این پوشه با Drive-1/2 بالا متفاوت است | فایل فهرست نهادها قابل خواندن؛ صحت محتوا/جامعیت/مجوز استفاده UNVERIFIED |
+
+### بررسی 2026-10-10 — Drive-User-Provided
+
+- پوشه با نام «بورس ایران» قابل دسترسی بود و زیرپوشه `Support sites` فایل `سبد گردانان بورس.xlsx` را داشت.
+- فایل با ID `1LkXtSGYLlxvLY3lewnAX9MNhKJQraeFj`، MIME نوع XLSX، اندازه 57,393 بایت و modified time برابر `2026-10-10T12:28:15.196Z` از Drive API دریافت شد.
+- Drive API مقدار MD5 `6c88034436a0e04d517e879f04ee957c` و نسخهٔ محلی مقدار SHA-256 `e930e9cf8cb684619cba84a35a52b929534a1a1411867d9562b39b87b7d4cf1e` را گزارش/محاسبه کرد.
+- محتوای sheet شامل 130 ردیف نهاد از چند نوع (از جمله 97 سبدگردان) و 130 پیوند به `cfi.seo.ir` است. این فایل فهرست نهادهاست، نه snapshot دارایی صندوق‌ها.
+- دسترسی‌پذیری فایل و hashها، صحت اطلاعات مندرج، پوشش کامل، صحت وضعیت مجوز نهادها، مالکیت/شرایط استفادهٔ میزبان و مجوز استخراج یا انتشار را تأیید نمی‌کند. وضعیت منبع داده `PARTIAL / UNVERIFIED` باقی می‌ماند.
+- ارزیابی و شکاف‌ها در `docs/discovery/FUND_HOLDINGS_DISCOVERY_IR.md` و `CR-20261010-001` ثبت شده است.
 
 ## Manifest موردنیاز پس از فعال‌شدن دسترسی
 برای هر فایل:
