@@ -1,0 +1,70 @@
+# پیکربندی جمع‌آوری روزانه منابع رصد (مرحله اسکلت — هیچ منبعی ONLINE_VERIFIED اعلام نشده)
+# زمان‌بندی واقعی روی سرور با IP ایران از طریق cron یا scheduler داخلی اعمال شود.
+
+enabled: false   # تا تأیید مالک و آزمون از IP ایران روشن نشود
+
+timezone: "Asia/Tehran"
+cron_suggestion: "30 16 * * 0-4"
+
+output_root: "data/snapshots"
+
+user_agent: "ARYA-AI-Trader/0.1 (+daily-ingest; +https://github.com/z1346m513-max/ARYA_AI_TRADER)"
+timeout_seconds: 30
+retries: 2
+backoff_seconds: 1.0
+
+sources:
+  shareholder_changes:
+    id: shareholder_changes
+    label: "تغییر سهامداران عمده"
+    page_url: "https://tsetmc.ir/ShareHolderChanges"
+    preferred_api: null
+    status: NOT_TESTED
+    enabled: false
+
+  old_list_15131F:
+    id: old_list_15131F
+    label: "فهرست قدیم TSETMC (ParTree=15131F)"
+    page_url: "https://old.tsetmc.com/Loader.aspx?ParTree=15131F#"
+    preferred_api: null
+    status: NOT_TESTED
+    enabled: false
+    notes: "ممکن است منسوخ باشد"
+
+  old_list_15131I:
+    id: old_list_15131I
+    label: "فهرست قدیم TSETMC (ParTree=15131I)"
+    page_url: "https://old.tsetmc.com/Loader.aspx?ParTree=15131I&t=0"
+    preferred_api: null
+    status: NOT_TESTED
+    enabled: false
+
+  sectors_summary:
+    id: sectors_summary
+    label: "خلاصه صنایع"
+    page_url: "https://tsetmc.ir/SectorsSummary"
+    preferred_api: null
+    status: NOT_TESTED
+    enabled: false
+
+  msg_top:
+    id: msg_top
+    label: "پیام‌های ناظر / MsgTop"
+    page_url: "https://tsetmc.ir/MsgTop"
+    preferred_api: null
+    status: NOT_TESTED
+    enabled: false
+
+  codal_home:
+    id: codal_home
+    label: "کدال (صفحه اصلی)"
+    page_url: "https://www.codal.ir/"
+    preferred_api: null
+    status: NOT_TESTED
+    enabled: false
+    notes: "کپی کل سایت توصیه نمی‌شود"
+
+storage:
+  save_raw: true
+  save_manifest: true
+  commit_to_git: false

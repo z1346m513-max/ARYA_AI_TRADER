@@ -1,5 +1,4 @@
-# زمان‌بندی به‌روزرسانی خودکار. هر بازار می‌تواند زمان‌بندی مجزا داشته باشد.
-# مقادیر مجاز: 30s, 1m, 5m, 15m, 30m, 1h  یا cron-style در آینده.
+# زمان‌بندی به‌روزرسانی خودکار.
 
 global_default: "5m"
 
@@ -23,3 +22,4 @@ background_jobs:
   codal_refresh: "1h"
   fundamental_refresh: "1h"
   portfolio_revaluation: "1m"
+  daily_ingest: "off"   # پیشنهاد cron: 30 16 * * 0-4 (Asia/Tehran)
