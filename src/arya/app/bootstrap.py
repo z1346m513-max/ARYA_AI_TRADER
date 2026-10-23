@@ -33,11 +33,16 @@ from arya.technical.strategies.trend_momentum import StrategySignal, trend_momen
 logger = logging.getLogger(__name__)
 
 
+class MarketDataSafetyError(RuntimeError):
+    """Raised when a market is disabled or only synthetic data is configured."""
+
+
 class AryaApp:
     """Facade کلی برنامه - تمام لایه‌ها این‌جا Wire می‌شوند."""
 
-    def __init__(self, settings: Settings | None = None):
+    def __init__(self, settings: Settings | None = None, *, allow_mock_data: bool = False):
         self.settings = settings or Settings.load()
+        self.allow_mock_data = allow_mock_data
         self._configure_logging()
 
         self.store = OHLCVStore(self.settings.app["storage"]["path"])
@@ -56,8 +61,25 @@ class AryaApp:
             format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
         )
 
-    def _provider_for_market(self, market: str):
+    def _provider_config_for_market(self, market: str) -> dict:
         cfg = self.settings.provider_for(market)
+        if not cfg:
+            raise MarketDataSafetyError(f"هیچ Provider پیکربندی‌شده‌ای برای بازار {market!r} وجود ندارد.")
+        if cfg.get("enabled") is False:
+            raise MarketDataSafetyError(
+                f"Provider بازار {market!r} غیرفعال است؛ ابتدا منبع دادهٔ مجاز را بررسی و فعال کنید."
+            )
+        driver = cfg.get("driver", "mock")
+        if driver == "mock" and not self.allow_mock_data:
+            raise MarketDataSafetyError(
+                f"تحلیل بازار {market!r} متوقف شد: driver='mock' دادهٔ مصنوعی تولید می‌کند. "
+                "برای استفادهٔ عملیاتی، Provider واقعی را پیکربندی و اعتبارسنجی کنید. "
+                "mock فقط با allow_mock_data=True در آزمون‌های کنترل‌شده مجاز است."
+            )
+        return cfg
+
+    def _provider_for_market(self, market: str):
+        cfg = self._provider_config_for_market(market)
         driver = cfg.get("driver", "mock")
         kwargs = {"market": market}
         if driver == "tsetmc":

@@ -12,7 +12,7 @@ import sys
 
 from rich.console import Console
 
-from arya.app.bootstrap import AryaApp
+from arya.app.bootstrap import AryaApp, MarketDataSafetyError
 from arya.dashboard.console_dashboard import render_recommendation
 
 
@@ -39,22 +39,26 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     console = Console()
 
-    app = AryaApp()
+    try:
+        app = AryaApp()
 
-    if args.command == "analyze":
-        rec = app.analyze_symbol(args.ticker, market=args.market, timeframe=args.timeframe)
-        render_recommendation(rec, console)
-
-    elif args.command == "list-symbols":
-        symbols = app.list_symbols(market=args.market)
-        for s in symbols:
-            console.print(f"  {s.ticker}  ({s.name})")
-
-    elif args.command == "scan":
-        symbols = app.list_symbols(market=args.market)
-        for s in symbols:
-            rec = app.analyze_symbol(s.ticker, market=args.market)
+        if args.command == "analyze":
+            rec = app.analyze_symbol(args.ticker, market=args.market, timeframe=args.timeframe)
             render_recommendation(rec, console)
+
+        elif args.command == "list-symbols":
+            symbols = app.list_symbols(market=args.market)
+            for s in symbols:
+                console.print(f"  {s.ticker}  ({s.name})")
+
+        elif args.command == "scan":
+            symbols = app.list_symbols(market=args.market)
+            for s in symbols:
+                rec = app.analyze_symbol(s.ticker, market=args.market)
+                render_recommendation(rec, console)
+    except MarketDataSafetyError as exc:
+        Console(stderr=True).print(f"[bold red]اجرا متوقف شد:[/bold red] {exc}")
+        return 2
 
     return 0
 
