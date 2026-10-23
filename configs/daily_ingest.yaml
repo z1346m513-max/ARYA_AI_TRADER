@@ -1,0 +1,37 @@
+enabled: false
+timezone: "Asia/Tehran"
+cron_suggestion: "30 16 * * 0-4"
+output_root: "data/snapshots"
+user_agent: "ARYA-AI-Trader/0.1 (+daily-ingest)"
+timeout_seconds: 30
+retries: 2
+backoff_seconds: 1.0
+sources:
+  shareholder_changes:
+    id: shareholder_changes
+    label: "Shareholder changes page"
+    page_url: "https://tsetmc.ir/ShareHolderChanges"
+    status: NOT_TESTED
+    enabled: false
+  sectors_summary:
+    id: sectors_summary
+    label: "Sectors summary"
+    page_url: "https://tsetmc.ir/SectorsSummary"
+    status: NOT_TESTED
+    enabled: false
+  msg_top:
+    id: msg_top
+    label: "MsgTop"
+    page_url: "https://tsetmc.ir/MsgTop"
+    status: NOT_TESTED
+    enabled: false
+  codal_home:
+    id: codal_home
+    label: "Codal home"
+    page_url: "https://www.codal.ir/"
+    status: NOT_TESTED
+    enabled: false
+storage:
+  save_raw: true
+  save_manifest: true
+  commit_to_git: false
