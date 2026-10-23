@@ -10,6 +10,7 @@
 قبل از هر کار، همه اعضای تیم و ایجنت‌ها باید AGENTS.md و قانون اساسی پلتفرم را بخوانند.
 توسعه بر مبنای اطلاعات غیرمعتبر ممنوع است و هر تغییر باید Change Record، دلیل، شواهد و نتیجه اعتبارسنجی داشته باشد.
 
+- docs/governance/TEAM_MANDATES.md
 - AGENTS.md
 - docs/governance/PLATFORM_CONSTITUTION.md
 - docs/governance/STARTUP_CHECKLIST.md
@@ -17,6 +18,7 @@
 - docs/governance/OWNER_AND_IP_POLICY.md
 - skills/arya-platform-governance/SKILL.md
 - docs/sources/DRIVE_SOURCE_REGISTRY.md
+- docs/data_sources/ONLINE_VS_MANUAL_DATA_MATRIX.md
 
 اصل مهم: اگر شواهد کافی وجود ندارد، ایجنت باید STOP کند و از حدس‌زدن خودداری کند.
 
