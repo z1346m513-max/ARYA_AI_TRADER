@@ -1,0 +1,10 @@
+{
+  "url": "https://api.tsetmc.com/docs",
+  "status": null,
+  "error": "URLError: <urlopen error timed out>",
+  "elapsed_ms": 25307,
+  "captured_at_utc": "2026-10-23T18:02:03.815034+00:00",
+  "agent": "phase0_evidence.py (ARYA CR-20261024-002 فاز ۰)",
+  "body_bytes": 0,
+  "verdict": "FAILED"
+}

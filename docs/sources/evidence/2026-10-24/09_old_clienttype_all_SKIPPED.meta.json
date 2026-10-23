@@ -1,0 +1,9 @@
+{
+  "url": "(skipped: no insCode)",
+  "status": null,
+  "error": "insCode not resolved",
+  "captured_at_utc": "2026-10-23T18:04:59.509461+00:00",
+  "agent": "phase0_evidence.py (ARYA CR-20261024-002 فاز ۰)",
+  "body_bytes": 0,
+  "verdict": "FAILED"
+}

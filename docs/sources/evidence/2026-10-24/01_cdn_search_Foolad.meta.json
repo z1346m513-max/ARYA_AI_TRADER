@@ -1,0 +1,10 @@
+{
+  "url": "https://cdn.tsetmc.com/api/Instrument/GetInstrumentSearch/%D9%81%D9%88%D9%84%D8%A7%D8%AF",
+  "status": null,
+  "error": "URLError: <urlopen error timed out>",
+  "elapsed_ms": 75369,
+  "captured_at_utc": "2026-10-23T18:01:38.506866+00:00",
+  "agent": "phase0_evidence.py (ARYA CR-20261024-002 فاز ۰)",
+  "body_bytes": 0,
+  "verdict": "FAILED"
+}

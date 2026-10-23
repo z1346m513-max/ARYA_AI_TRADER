@@ -1,0 +1,10 @@
+{
+  "url": "https://service.tsetmc.com/webservice/TsePublicV2.asmx?op=ShareChange",
+  "status": null,
+  "error": "URLError: <urlopen error timed out>",
+  "elapsed_ms": 50290,
+  "captured_at_utc": "2026-10-23T18:03:44.404111+00:00",
+  "agent": "phase0_evidence.py (ARYA CR-20261024-002 فاز ۰)",
+  "body_bytes": 0,
+  "verdict": "FAILED"
+}

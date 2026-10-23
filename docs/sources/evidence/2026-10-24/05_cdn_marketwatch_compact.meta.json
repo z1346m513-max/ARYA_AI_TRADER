@@ -1,0 +1,10 @@
+{
+  "url": "https://cdn.tsetmc.com/api/ClosingPrice/GetMarketWatch?market=0&paperTypes[0]=1&paperTypes[1]=2&paperTypes[2]=3&paperTypes[3]=4&paperTypes[4]=5&paperTypes[5]=6&paperTypes[6]=7&paperTypes[7]=8&paperTypes[8]=9&withBestLimits=false&hEven=0&RefID=0",
+  "status": null,
+  "error": "URLError: <urlopen error timed out>",
+  "elapsed_ms": 75104,
+  "captured_at_utc": "2026-10-23T18:04:59.508909+00:00",
+  "agent": "phase0_evidence.py (ARYA CR-20261024-002 فاز ۰)",
+  "body_bytes": 0,
+  "verdict": "FAILED"
+}
