@@ -89,15 +89,26 @@ class TsetmcMarketProvider(MarketDataProvider):
             return []
         return [item for item in value if isinstance(item, dict)]
 
+    @staticmethod
+    def _text(row: dict, *keys: str, default: str = "") -> str:
+        """اولین مقدار متنی غیرخالی از میان کلیدها (پشتیبانی کلید بلند و کوتاه TSETMC)."""
+        for key in keys:
+            value = row.get(key)
+            if value not in (None, ""):
+                return str(value).strip()
+        return default
+
     def list_symbols(self) -> list[Symbol]:
         rows = self._unwrap(self._get_json(self._market_watch_path), "marketwatch")
         result: list[Symbol] = []
         seen: set[str] = set()
         for row in rows:
-            ticker = str(row.get("lVal18AFC") or row.get("lVal18") or "").strip()
+            ticker = self._text(row, "lVal18AFC", "lVal18", "lva")
             if ticker and ticker not in seen:
                 seen.add(ticker)
-                result.append(Symbol(ticker=ticker, market="stock", name=row.get("lVal30")))
+                result.append(
+                    Symbol(ticker=ticker, market="stock", name=self._text(row, "lVal30", "lvc") or None)
+                )
         return result
 
     def fetch_market_watch(self, ticker: str | None = None) -> list[dict]:
@@ -105,18 +116,18 @@ class TsetmcMarketProvider(MarketDataProvider):
         rows = self._unwrap(self._get_json(self._market_watch_path), "marketwatch")
         quotes: list[dict] = []
         for row in rows:
-            symbol = str(row.get("lVal18AFC") or row.get("lVal18") or "").strip()
+            symbol = self._text(row, "lVal18AFC", "lVal18", "lva")
             if not symbol or (ticker and symbol != ticker):
                 continue
             quotes.append(
                 {
                     "ticker": symbol,
-                    "name": row.get("lVal30"),
-                    "last": self._number(row, "pDrCotVal", "pl", "pClosing"),
-                    "close": self._number(row, "pClosing", "pc"),
+                    "name": self._text(row, "lVal30", "lvc") or None,
+                    "last": self._number(row, "pDrCotVal", "pl", "pClosing", "pdv", "pcl"),
+                    "close": self._number(row, "pClosing", "pc", "pcl"),
                     "previous_close": self._number(row, "priceYesterday", "py"),
-                    "volume": self._number(row, "qTotTran5J", "zTotTran"),
-                    "value": self._number(row, "qTotCap", "qTotCap"),
+                    "volume": self._number(row, "qTotTran5J", "zTotTran", "qtj", "ztt"),
+                    "value": self._number(row, "qTotCap", "qtc"),
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             )
@@ -156,7 +167,7 @@ class TsetmcMarketProvider(MarketDataProvider):
         if timeframe not in {"1d", "1D", "daily"}:
             raise ValueError("TSETMC provider فعلاً فقط timeframe روزانه را پشتیبانی می‌کند")
         if limit <= 0:
-            raise ValueError("limit باید بزرگ‌تر از صفر باشد")
+            raise ValueError("limit باید بزرگ‌\u200cتر از صفر باشد")
         ins_code, resolved_name = self._resolve_instrument(symbol.ticker)
         rows = self._unwrap(
             self._get_json(f"/api/ClosingPrice/GetClosingPriceDailyList/{ins_code}/{limit}"),
