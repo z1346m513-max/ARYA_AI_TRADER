@@ -24,6 +24,19 @@ codal:
   driver: "mock"
   enabled: false
 
+# مالکیت بخش: Z.ai (جدول مالکیت فایل — CR-20261024-002)
+# درایور واقعی snapshot بازارکامل حقیقی/حقوقی؛ هیچ دادهٔ mock/synthetic تولید نمی‌کند.
+# data_quality: usable فقط پس از انتساب موفق تاریخ snapshot به یک روز بستهٔ واقعی.
+shareholders:
+  driver: "tsetmc_client_type"
+  enabled: true
+  snapshot_volume_tolerance: 0.05   # حداکثر اختلاف نسبی مجاز حجم snapshot با روز بسته
+  closing_history_days: 30          # پنجرهٔ تاریخچهٔ بسته برای انتساب تاریخ
+  timeout_seconds: 15
+  retries: 3
+  base_url_cdn: "https://cdn.tsetmc.com"
+  base_url_old: "https://old.tsetmc.com"
+
 news:
   driver: "mock"
   enabled: false
