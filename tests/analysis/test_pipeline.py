@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from arya.app.bootstrap import AryaApp
+from arya.app.bootstrap import AryaApp, MarketDataSafetyError
 from arya.config.settings import Settings
 from arya.models.analysis_result import Action
 
@@ -17,7 +17,27 @@ def app(tmp_path, monkeypatch):
     settings.providers["market"]["crypto"]["driver"] = "mock"
     # اجرای تست‌ها روی یک دیتابیس موقت تا فایل واقعی پروژه دست‌نخورده بماند
     settings.app["storage"]["path"] = str(tmp_path / "test_arya.db")
-    return AryaApp(settings=settings)
+    return AryaApp(settings=settings, allow_mock_data=True)
+
+
+def test_mock_provider_is_blocked_by_default(tmp_path):
+    settings = Settings.load()
+    settings.providers["market"]["stock"]["driver"] = "mock"
+    settings.app["storage"]["path"] = str(tmp_path / "blocked_mock.db")
+    app = AryaApp(settings=settings)
+
+    with pytest.raises(MarketDataSafetyError, match="driver='mock'"):
+        app.analyze_symbol("FOOLAD", market="stock")
+
+
+def test_disabled_provider_is_blocked_even_with_test_mock_override(tmp_path):
+    settings = Settings.load()
+    settings.providers["market"]["forex"]["enabled"] = False
+    settings.app["storage"]["path"] = str(tmp_path / "disabled_market.db")
+    app = AryaApp(settings=settings, allow_mock_data=True)
+
+    with pytest.raises(MarketDataSafetyError, match="غیرفعال است"):
+        app.list_symbols(market="forex")
 
 
 def test_analyze_symbol_returns_valid_recommendation(app):
