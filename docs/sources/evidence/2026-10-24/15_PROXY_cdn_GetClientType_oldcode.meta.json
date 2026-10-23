@@ -1,0 +1,9 @@
+{
+  "url": "https://cdn.tsetmc.com/api/ClientType/GetClientType/53809308236531169/20261021",
+  "status": null,
+  "method": "WebFetch proxied (direct egress blocked in build environment)",
+  "captured_at": "2026-10-24",
+  "verdict": "FAILED",
+  "finding": "دومین تلاش برای GetClientType تک‌نمادی، این بار طبق پیشنهاد INDEX (بند ۲) با insCode قدیمی (insCode3 فولاد = 53809308236531169) و تاریخ معتبر معاملاتی 20261021 (آخرین dEven تأییدشده در فایل 10). پروکسی پاسخ را تبدیل نکرد: «# Html Convert Error - Error in converting: 'NoneType' object is not subscriptable». با دو شکست واقعی (insCode جدید در 20261021/22 و کد قدیمی در 20261021) نتیجه می‌شود این endpoint از مسیر پروکسی فعلی قابل احراز نیست.",
+  "open_issue": "مسیر عملیاتی M2 همان snapshot بازارکامل ClientTypeAll.aspx است (فایل‌های 12/13). برای احراز نهایی GetClientType نیازمند egress مستقیم یا ابزار My Browser (رتبه A سند connector-and-repo-evaluation)."
+}

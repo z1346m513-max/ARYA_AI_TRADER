@@ -1,0 +1,14 @@
+{
+  "url": [
+    "https://service.tsetmc.com/webservice/TsePublicV2.asmx?WSDL",
+    "https://service.tsetmc.com/webservice/TsePublicV2.asmx?singleWsdl",
+    "https://service.tsetmc.com/webservice/TsePublicV2.asmx?op=ShareChange",
+    "https://service.tsetmc.com/webservice/TsePublicV2.asmx?op=ClientType"
+  ],
+  "status": null,
+  "method": "WebFetch proxied (direct egress blocked in build environment)",
+  "captured_at": "2026-10-24",
+  "verdict": "FAILED (برای schema کامل) / VERIFIED (فهرست عملیات، بار سوم)",
+  "finding": "هر دو صفت ?WSDL و ?singleWsdl از پروکسی فقط صفحهٔ HTML فهرست عملیات را برمی‌گردانند (۴۶ عملیات؛ AdjPrceAllByCIsin ... TOP) — هیچ xs:schema، targetNamespace یا امضای پارامتری دیده نمی‌شود. صفحه‌های ?op=ShareChange و ?op=ClientType هم از پروکسی فقط فهرست عملیات با شناسهٔ عددی می‌دهند (ShareChange = شناسهٔ 39) و قالب SOAP template (پارامترهای UserName/PassWord/...) را نشان نمی‌دهند.",
+  "open_issue": "WSDL کامل TsePublicV2 همچنان UNVERIFIED. حدس‌زدن امضای متدها ممنوع است (اصل ۲ قانون اساسی)؛ درایور فعلی (CR-20261024-002) عمداً روی endpointهای tsev2/REST واقعیِ احرازشده کار می‌کند تا بدون SOAP پیش برود. واکشی WSDL با egress مستقیم یا My Browser."
+}
