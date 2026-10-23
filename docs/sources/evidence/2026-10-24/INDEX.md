@@ -17,14 +17,17 @@
 | `10_PROXY_cdn_GetClosingPriceDailyList_foolad.raw.json` | `cdn.tsetmc.com/api/ClosingPrice/GetClosingPriceDailyList/46348559193224090/5` | **VERIFIED** | پاسخ کامل واقعی. ۵ روز معاملهٔ اخیر فولاد؛ آخرین `dEven=20261021` (کلوز ۴۲۲۰، حجم ۴٫۸۶ میلیارد سهم). |
 | `11_PROXY_cdn_GetInstrumentSearch_foolad.raw.json` | `cdn.tsetmc.com/api/Instrument/GetInstrumentSearch/فولاد` | **VERIFIED** | پاسخ کامل واقعی. `insCode` فولاد = `46348559193224090`؛ فیلدهای `insCode2/3/4`، `flow`، `cgrValCot` و ... زنده تأیید شد. |
 | `12_PROXY_old_ClientTypeAll_sample.raw.txt` | `old.tsetmc.com/tsev2/data/ClientTypeAll.aspx?t=46348559193224090` | **VERIFIED (reachable) + UNVERIFIED (معناشناسی فیلدها)** | snapshot کل بازار حقیقی/حقوقی؛ ~۱۰۵ هزار کاراکتر؛ ردیف‌ها با insCode قدیمی کلید خورده‌اند. ردیف فولاد (`53809308236531169 = insCode3 فولاد`) در خروجی کامل حاضر بود و در نمونه ثبت شده است. **دو خط جدید (break line) در فایل نمونه فقط برای خوانایی افزوده شده و جزء payload اصلی نیستند — دادهٔ اصلی یک خط با جداکنندهٔ `;` است.** |
+| `13_PROXY_old_ClientTypeAll_oldcode_rows.raw.txt` + `.meta.json` | `old.tsetmc.com/tsev2/data/ClientTypeAll.aspx?t=53809308236531169` (کد قدیمی) | **VERIFIED** | پاسخ دقیقاً هم‌اندازهٔ واکشی قبلی (۱۰۵٬۲۲۴ کاراکتر) ⇒ پارامتر `t` نادیده گرفته می‌شود؛ endpoint = snapshot بازارکامل آخرین روز. **تأیید ساختاری قالب ۹ فیلدی:** `insCode, iBuyCount, lBuyCount, iBuyVol, lBuyVol, iSellCount, lSellCount, iSellVol, lSellVol` — در همهٔ ردیف‌ها مجموع خرید = مجموع فروش. تاریخ snapshot در پاسخ نیست و با ۵ روز بستهٔ فولاد تطبیق ندارد ⇒ انتساب تاریخ UNVERIFIED. |
+| `14_PROXY_old_ClientType_single.meta.json` | `old.tsetmc.com/tsev2/data/ClientType.aspx?t=53809308236531169` | FAILED | endpoint تک‌نمادی از پروکسی خوانده نشد (بدنهٔ خالی/خطای تبدیل). مسیر عملیاتی M2: ClientTypeAll بازارکامل + فیلتر insCode قدیمی. |
 
-## فرضیهٔ معناشناسی فیلدهای ClientTypeAll (UNVERIFIED — قابلیت اثبات با پروب تک‌نمادی)
+## معناشناسی فیلدهای ClientTypeAll (ساختاری تأیید شد — به‌روزرسانی فایل 13)
 
-الگوی هر ردیف: `insCode, b_iCount, b_lCount, b_iVol, b_lVol, s_iCount, s_lCount, s_iVol, s_lVol`
+الگوی هر ردیف: `insCode, iBuyCount, lBuyCount, iBuyVol, lBuyVol, iSellCount, lSellCount, iSellVol, lSellVol`
 
-- نمونهٔ کنترل: `53809308236531169,11,3,2511640,1198380,27,1,3110020,600000`
-- تفسیر: ۱۱ معامله‌گر حقیقی خریدار با ۲٫۵۱M سهم، ۳ حقوقی خریدار با ۱٫۱۹M سهم، ۲۷ حقیقی فروشنده با ۳٫۱۱M سهم، ۱ حقوقی فروشنده با ۶۰۰K سهم.
-- ⚠️ این تفسیر **فرضیهٔ منطبق بر ردیف‌های کنترل** است؛ تا پروب تک‌نمادی مقایسه‌شده با صفحهٔ نماد TSETMC برچسب UNVERIFIED دارد.
+- نمونهٔ کنترل ۱ (سهم خرد، تطابق کامل خرید/فروش): `971068957336171` → خرید ۱۰۰+۴۴٬۴۵۶ = فروش ۴۴٬۴۵۶+۱۰۰ = ۴۴٬۵۵۶
+- نمونهٔ کنترل ۲ (فولاد): `53809308236531169` → خرید ۲٬۵۱۱٬۶۴۰+۱٬۱۹۸٬۳۸۰ = فروش ۳٬۱۱۰٬۰۲۰+۶۰۰٬۰۰۰ = ۳٬۷۱۰٬۰۲۰
+- ✅ ساختار ۹ فیلدی و اتحاد مجموع خرید = مجموع فروش در همهٔ ردیف‌های مشاهده‌شده برقرار است.
+- ⚠️ دو مورد همچنان UNVERIFIED است: (۱) تاریخ دقیق snapshot (با هیچ‌کدام از ۵ روز بستهٔ واقعی فولاد تطبیق ندارد) و (۲) تطبیق مقادیر با صفحهٔ حقیقی/حقوقی سایت برای یک روز مشخص. درایور (CR-20261024-002) مشتق‌سازی را فقط پس از تطبیق حجم snapshot با یکی از روزهای بستهٔ واقعی مجاز می‌داند؛ در غیر این صورت رد صریح می‌کند.
 
 ## هنوز UNVERIFIED (مانند CR-20261024-001 پیوست ج)
 

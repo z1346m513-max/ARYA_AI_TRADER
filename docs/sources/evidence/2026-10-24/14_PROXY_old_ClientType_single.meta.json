@@ -1,0 +1,10 @@
+{
+  "url": "https://old.tsetmc.com/tsev2/data/ClientType.aspx?t=53809308236531169",
+  "status": null,
+  "method": "WebFetch proxied (direct egress blocked in build environment)",
+  "captured_at": "2026-10-24 (UTC, exact time not recorded by fetch tool)",
+  "body_bytes": 0,
+  "verdict": "FAILED",
+  "error": "پروکسی: 'Html Convert Error — NoneType object is not subscriptable' (احتمالاً بدنهٔ خالی یا محتوای غیر HTML) — همان الگوی خطای cdn GetClientType",
+  "implication": "endpoint تک‌نمادی ClientType.aspx (که صفحهٔ نماد TSETMC استفاده می‌کند) از مسیر پروکسی هم قابل خواندن نبود؛ UNVERIFIED باقی می‌ماند. مسیر عملیاتی M2: همان ClientTypeAll بازارکامل + فیلتر با insCode قدیمی."
+}
