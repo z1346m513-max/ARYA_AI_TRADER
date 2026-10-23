@@ -1,9 +1,6 @@
-# تعریف Providerهای داده. فاز اول با TSETMC برای بورس ایران اجرا می‌شود.
-# mock همچنان برای تست آفلاین و توسعه بدون شبکه در دسترس است.
-
 market:
   stock:
-    driver: "tsetmc"      # mock | tsetmc | ...
+    driver: "tsetmc"
     enabled: true
     rate_limit_per_min: 60
     timeout_seconds: 15
@@ -11,12 +8,12 @@ market:
     base_url: "https://cdn.tsetmc.com"
 
   crypto:
-    driver: "mock"        # mock | binance | ...
+    driver: "mock"
     enabled: true
     rate_limit_per_min: 1200
 
   forex:
-    driver: "mock"        # mock | oanda | ...
+    driver: "mock"
     enabled: false
     rate_limit_per_min: 60
 
@@ -35,3 +32,11 @@ macro:
 sentiment:
   driver: "mock"
   enabled: false
+
+shareholders:
+  driver: "mock"
+  enabled: true
+  days: 5
+  rate_limit_per_min: 30
+  timeout_seconds: 20
+  retries: 2
