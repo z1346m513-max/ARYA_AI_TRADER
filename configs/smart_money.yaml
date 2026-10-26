@@ -1,0 +1,15 @@
+# Provisional thresholds for ShareChangeAnalyzer — not production-calibrated.
+enabled: true
+
+signals:
+  concentration: true
+  retail_per_capita: true
+  legal_flow: true
+
+thresholds:
+  count_change_pct: 3.0
+  legal_buy_share: 0.30
+
+provider:
+  driver: mock
+  days: 5
