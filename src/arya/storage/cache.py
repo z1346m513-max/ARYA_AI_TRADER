@@ -10,6 +10,7 @@ import json
 import sqlite3
 from pathlib import Path
 
+from arya.data_quality import OHLCVQualityReport
 from arya.models.market_data import Candle, OHLCVSeries, Symbol
 
 
@@ -35,7 +36,85 @@ class OHLCVStore:
             )
             """
         )
+        self._conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS data_quality_runs (
+                run_id TEXT PRIMARY KEY,
+                ticker TEXT NOT NULL,
+                market TEXT NOT NULL,
+                timeframe TEXT NOT NULL,
+                provider TEXT NOT NULL,
+                retrieved_at_utc TEXT NOT NULL,
+                row_count INTEGER NOT NULL,
+                first_timestamp TEXT,
+                last_timestamp TEXT,
+                snapshot_sha256 TEXT NOT NULL,
+                is_valid INTEGER NOT NULL,
+                issues_json TEXT NOT NULL
+            )
+            """
+        )
         self._conn.commit()
+
+    def record_data_quality(
+        self,
+        run_id: str,
+        series: OHLCVSeries,
+        provider: str,
+        retrieved_at_utc: str,
+        report: OHLCVQualityReport,
+        data_hash: str,
+    ) -> None:
+        """Append a validation result and normalized-input provenance record."""
+        issues = [
+            {"code": issue.code, "message": issue.message, "candle_index": issue.candle_index}
+            for issue in report.issues
+        ]
+        self._conn.execute(
+            """
+            INSERT INTO data_quality_runs (
+                run_id, ticker, market, timeframe, provider, retrieved_at_utc,
+                row_count, first_timestamp, last_timestamp, snapshot_sha256,
+                is_valid, issues_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                run_id,
+                series.symbol.ticker,
+                series.symbol.market,
+                series.timeframe,
+                provider,
+                retrieved_at_utc,
+                report.row_count,
+                report.first_timestamp,
+                report.last_timestamp,
+                data_hash,
+                int(report.is_valid),
+                json.dumps(issues, ensure_ascii=False, sort_keys=True),
+            ),
+        )
+        self._conn.commit()
+
+    def load_data_quality_run(self, run_id: str) -> dict | None:
+        """Return one recorded validation/provenance event, if it exists."""
+        row = self._conn.execute(
+            """SELECT run_id, ticker, market, timeframe, provider, retrieved_at_utc,
+                      row_count, first_timestamp, last_timestamp, snapshot_sha256,
+                      is_valid, issues_json
+               FROM data_quality_runs WHERE run_id=?""",
+            (run_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        columns = (
+            "run_id", "ticker", "market", "timeframe", "provider", "retrieved_at_utc",
+            "row_count", "first_timestamp", "last_timestamp", "snapshot_sha256",
+            "is_valid", "issues_json",
+        )
+        result = dict(zip(columns, row))
+        result["is_valid"] = bool(result["is_valid"])
+        result["issues"] = json.loads(result.pop("issues_json"))
+        return result
 
     def save(self, series: OHLCVSeries) -> None:
         payload = json.dumps(

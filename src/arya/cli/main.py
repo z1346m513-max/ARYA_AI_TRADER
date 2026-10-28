@@ -14,6 +14,7 @@ from rich.console import Console
 
 from arya.app.bootstrap import AryaApp
 from arya.dashboard.console_dashboard import render_recommendation
+from arya.data_quality import OHLCVQualityError
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -40,21 +41,24 @@ def main(argv: list[str] | None = None) -> int:
     console = Console()
 
     app = AryaApp()
-
-    if args.command == "analyze":
-        rec = app.analyze_symbol(args.ticker, market=args.market, timeframe=args.timeframe)
-        render_recommendation(rec, console)
-
-    elif args.command == "list-symbols":
-        symbols = app.list_symbols(market=args.market)
-        for s in symbols:
-            console.print(f"  {s.ticker}  ({s.name})")
-
-    elif args.command == "scan":
-        symbols = app.list_symbols(market=args.market)
-        for s in symbols:
-            rec = app.analyze_symbol(s.ticker, market=args.market)
+    try:
+        if args.command == "analyze":
+            rec = app.analyze_symbol(args.ticker, market=args.market, timeframe=args.timeframe)
             render_recommendation(rec, console)
+
+        elif args.command == "list-symbols":
+            symbols = app.list_symbols(market=args.market)
+            for s in symbols:
+                console.print(f"  {s.ticker}  ({s.name})")
+
+        elif args.command == "scan":
+            symbols = app.list_symbols(market=args.market)
+            for s in symbols:
+                rec = app.analyze_symbol(s.ticker, market=args.market)
+                render_recommendation(rec, console)
+    except OHLCVQualityError as exc:
+        console.print(f"[red]تحلیل متوقف شد؛ کنترل کیفیت داده رد شد: {exc}[/red]")
+        return 2
 
     return 0
 

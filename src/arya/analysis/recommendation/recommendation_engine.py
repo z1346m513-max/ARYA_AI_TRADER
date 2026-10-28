@@ -24,6 +24,7 @@ class RecommendationEngine:
         decision: Decision,
         risk: RiskAssessment,
         section_scores: list[SectionScore],
+        data_quality_run_id: str | None = None,
     ) -> Recommendation:
         if decision.action_score >= self.BUY_THRESHOLD:
             action = Action.BUY
@@ -44,6 +45,7 @@ class RecommendationEngine:
             reasons=decision.reasons,
             risk=risk,
             section_scores=section_scores,
+            data_quality_run_id=data_quality_run_id,
         )
 
     @staticmethod
