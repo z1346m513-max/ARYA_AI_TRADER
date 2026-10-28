@@ -34,9 +34,16 @@ sentiment:
   enabled: false
 
 shareholders:
-  driver: "mock"
-  enabled: true
+  driver: "mock"          # CR-20261029-001: تا تأیید اتصال زندهٔ TSETMC (گام ۵ برنامهٔ مالک) روی mock می‌ماند؛
+  enabled: true           # سوییچ به "tsetmc_client_type" فقط پس از گزارش اعتبارسنجی زنده و تصمیم مالک.
   days: 5
   rate_limit_per_min: 30
   timeout_seconds: 20
   retries: 2
+  # --- کلیدهای درایور واقعی tsetmc_client_type (ثبت‌شده در ShareholderProviderRegistry) —
+  # --- امروز مصرف‌کننده‌ای ندارند و صرفاً آماده‌سازی سوییچ آینده‌اند:
+  base_url_cdn: "https://cdn.tsetmc.com"
+  base_url_old: "https://old.tsetmc.com"
+  snapshot_volume_tolerance: 0.05   # لایهٔ ۱ گیت: حداکثر اختلاف نسبی حجم snapshot با روز بسته
+  closing_history_days: 30          # پنجرهٔ تاریخچهٔ بسته برای انتساب تاریخ
+  min_date_agreement_ratio: 0.6     # لایهٔ ۳: حداقل توافق چند-نمادی برای تأیید تاریخ snapshot

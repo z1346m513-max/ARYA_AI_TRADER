@@ -1,6 +1,8 @@
 """ShareChangeAnalyzer — smart_money section from internal model.
 
-Thresholds are provisional. missing data never yields a positive signal.
+Thresholds are provisional. CR-20261029-001 (owner review): non-usable data
+(missing/partial/any unknown state) NEVER yields a signal — score and confidence
+are forced to zero with an explicit reason. Only data_quality == "usable" is scored.
 """
 from __future__ import annotations
 
@@ -22,12 +24,22 @@ class ShareChangeAnalyzer:
         self.enabled_signals = set(enabled_signals)
 
     def analyze(self, metrics: ShareholderFlowMetrics) -> SectionScore:
-        if metrics.data_quality == "missing":
+        # CR-20261029-001 — گیت دادهٔ غیرقابل‌اتکا: partial/missing/هر وضعیت ناشناخته
+        # هرگز نباید به امتیاز معاملاتی (حتی با اطمینان کم) تبدیل شود.
+        if metrics.data_quality != "usable":
+            reason = {
+                "missing": "no shareholder data available (data_quality=missing)",
+                "partial": "incomplete or date-unattributed data (data_quality=partial) — real-data policy forbids scoring",
+            }.get(metrics.data_quality, f"untrusted data_quality={metrics.data_quality} — scoring blocked")
             return SectionScore(
                 self.section_name,
                 0.0,
                 0.0,
-                {"reasons": [], "data_quality": "missing", "metrics": metrics.as_dict()},
+                {
+                    "reasons": [reason],
+                    "data_quality": metrics.data_quality,
+                    "metrics": metrics.as_dict(),
+                },
             )
 
         signals: list[float] = []
@@ -89,8 +101,9 @@ class ShareChangeAnalyzer:
             )
 
         score = sum(signals) / len(signals)
-        q = 1.0 if metrics.data_quality == "usable" else 0.5
-        confidence = min(1.0, (len(signals) / 3.0) * q)
+        # CR-20261029-001: به این نقطه فقط با data_quality == "usable" رسیده‌ایم؛
+        # ضریب q=0.5 برای partial حذف شد (مسیر قدیمی که به partial امتیاز با اطمینان ۰٫۵ می‌داد بسته است).
+        confidence = min(1.0, len(signals) / 3.0)
         return SectionScore(
             self.section_name,
             round(score, 4),
