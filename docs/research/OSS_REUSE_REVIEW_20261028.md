@@ -23,7 +23,24 @@
 | [Great Expectations](https://github.com/fivetran/great_expectations) | Apache-2.0؛ فایل‌های تغییرکرده و NOTICE/attribution را رعایت کنید. | قراردادهای assertion و validation batch. | به‌جای چارچوب کامل، checks محدود و بومی برای OHLCV پیاده شد. |
 | [OpenLineage](https://github.com/OpenLineage/OpenLineage) | Apache-2.0؛ DCO به معنی واگذاری کامل copyright نیست. | شناسهٔ run/job/dataset، schema version و facets برای lineage. | الگوی ثبت رویداد در جدول بومی SQLite استفاده شد؛ client/collector اضافه نشد. |
 
-اطلاعات stars و فعالیت مخازن نوسانی‌اند و برای تصمیم معماری به‌تنهایی معیار نیستند؛ شواهد snapshot، شاخه/commit و license مستقیم در لینک‌های مخزن/فایل مرجع بالا قابل بازبینی است. ارزیابی به معنی ممیزی حقوقی کامل، ممیزی امنیتی، ضمانت نگهداری آتی یا تأیید صحت مالی کتابخانه‌ها نیست.
+## snapshot نسخه و شواهد نگهداری
+
+این اطلاعات در 2026-10-28 گردآوری شده و نشانهٔ فعالیت مخزن است، نه تضمین نگهداری یا درست‌بودن بازار. اگر ابزار، license یا کد در آینده انتخاب شد، دقیقاً همان commit/file انتخاب‌شده را دوباره بررسی کنید.
+
+| مخزن | شاخه/نسخه و شاهد تاریخ‌دار در زمان بررسی |
+|---|---|
+| OpenBB | `develop`; API مخزن `pushed_at=2026-10-02`; صفحهٔ releases نسخهٔ `v2.0.0` را در 2026-09-29 نشان می‌داد. SHA سرشاخه در گزارش استخراج نشد. [API](https://api.github.com/repos/OpenBB-finance/OpenBB), [releases](https://github.com/OpenBB-finance/OpenBB/releases) |
+| FinanceDataReader | `master`; API `pushed_at=2026-05-13`; endpoint commit جاری برای README/CLI-doc تغییر را نشان داد، اما SHA در capture قابل‌اتکا ثبت نشد. [API](https://api.github.com/repos/FinanceData/FinanceDataReader), [master commit endpoint](https://api.github.com/repos/FinanceData/FinanceDataReader/commits/master) |
+| Qlib | `main`; commit `54355232463878d2eebb91fe0ee5fa7fa1f5976c` (2026-10-08); release `v0.9.8` در 2026-10-08. [commit](https://github.com/microsoft/qlib/commit/54355232463878d2eebb91fe0ee5fa7fa1f5976c), [release](https://github.com/microsoft/qlib/releases/tag/v0.9.8) |
+| backtesting.py | `master`; commit `ca2e2611621e472542ba90f7243a1fa06a7d7108` (2026-08-05); صفحهٔ Releases نسخهٔ منتشرشده‌ای نشان نداد. [commit API](https://api.github.com/repos/kernc/backtesting.py/commits?per_page=1), [releases](https://github.com/kernc/backtesting.py/releases) |
+| QuantStats | `main`; commit `9ef4c6d0a4ffe7831f6ebba6a5824fd33a90c05a` (2026-09-27), مربوط به `v0.0.86`; [commit](https://api.github.com/repos/ranaroussi/quantstats/commits/main), [releases](https://github.com/ranaroussi/quantstats/releases) |
+| vectorbt | `master`; آخرین release قابل‌مشاهده `v1.2.0`; SHA سرشاخه در capture قابل‌اتکا ثبت نشد. [release](https://github.com/polakowo/vectorbt/releases/tag/v1.2.0) |
+| Dagster | `master`; commit تاریخ‌دار قابل مشاهده `fd0c92b` در 2026-10-28; releaseهای قابل‌مشاهده Dagster core `1.13.27` و libraries `0.29.27`. [commit history](https://github.com/dagster-io/dagster/commits/master/), [releases](https://github.com/dagster-io/dagster/releases) |
+| SHAP | `main`; commit `c058cae5fd5da62b70ff9058247bd01b6a8c05d0` (2026-10-21); releases `v0.53.0rc0` و `v0.52.0`. [commit](https://github.com/shap/shap/commit/c058cae5fd5da62b70ff9058247bd01b6a8c05d0), [releases](https://github.com/shap/shap/releases) |
+| Great Expectations | canonical repo `fivetran/great_expectations`, branch `develop`; tree SHA `99f4d0cca81de00db3af8859e16127e9b9927dae`; release `1.24.1` در release/changelog بررسی‌شده. [tree API](https://api.github.com/repos/fivetran/great_expectations/git/trees/develop?recursive=1), [releases](https://github.com/fivetran/great_expectations/releases) |
+| OpenLineage | `main`; HEAD `da12872d8ef32ce851c572ac1df72f1aae11df0c` (2026-10-28); release `1.54.0` (2026-10-13). [commit API](https://api.github.com/repos/OpenLineage/OpenLineage/commits/main), [release](https://github.com/OpenLineage/OpenLineage/releases/tag/1.54.0) |
+
+تعداد stars در تاریخ بررسی برای OpenBB 74,027، FinanceDataReader 1,559، Qlib 49,557، backtesting.py 9,034، QuantStats 7,660، Dagster 16,198، SHAP 25,835، Great Expectations 11,835 و OpenLineage 2,672 گزارش شد؛ برای vectorbt مقدار قابل‌اتکا استخراج نشد. این اعداد نوسانی‌اند، ارزش فنی/کیفیت مالی را ثابت نمی‌کنند و مبنای تصمیم استفاده نیستند. این ارزیابی به معنی ممیزی حقوقی کامل، ممیزی امنیتی، ضمانت نگهداری آتی یا تأیید صحت مالی کتابخانه‌ها نیست.
 
 ## تصمیم لایسنس و مالکیت
 
