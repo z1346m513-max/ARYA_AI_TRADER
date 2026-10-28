@@ -16,6 +16,7 @@
 | CR-20261002-001 | 2026-10-02 | ایجاد قانون اساسی، Startup Gate، سیاست شواهد و فرآیند چندایجنتی | IMPLEMENTED | وضعیت واقعی مخزن، مستندات معماری، سیاست‌های رسمی GitHub برای PR/protection | مستندات و ساختار فایل‌ها بررسی شد؛ CI ایجاد شد | مالک پروژه تأییدکننده نهایی |
 | CR-20261002-002 | 2026-10-02 | ثبت محدودیت دسترسی به دو پوشه Google Drive و جلوگیری از ادعای خواندن/نوشتن بدون اتصال | BLOCKED | اتصال Google Drive در محیط فعلی DISABLED_BY_ADMIN؛ لینک‌ها قابل خواندن نبودند | هیچ محتوای Drive ادعا یا وارد کد نشده است | نیازمند فراهم‌شدن اتصال Drive |
 | CR-20261002-003 | 2026-10-02 | بهبود اجرای چندایجنتی، ثبت بهبودهای فنی و Governance Gate قابل اجرا | IMPLEMENTED | بررسی baseline مخزن، architecture، roadmap، provider config و مستندات رسمی GitHub | script و workflow اضافه شد؛ اجرای واقعی CI پس از PR قابل ثبت است | مالک پروژه تأییدکننده نهایی |
+| CR-20261028-001 | 2026-10-28 | ممیزی ۱۰ مخزن GitHub و افزودن OHLCV quality gate و SQLite provenance | PROPOSED | `docs/research/OSS_REUSE_REVIEW_20261028.md`; license files/metadata مخازن upstream؛ کد/provider/tests فعلی ARYA | 33 pytest، governance، compileall و diff-check موفق؛ بدون کپی کد یا dependency؛ آزمون live اجرا نشد | بازبینی/پذیرش با مالک پروژه در PR |
 
 ## قانون
 هیچ تغییر کدی نباید بدون ID این دفتر وارد PR شود.

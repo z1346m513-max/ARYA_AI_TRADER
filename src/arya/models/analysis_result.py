@@ -55,3 +55,4 @@ class Recommendation:
     reasons: list[str] = field(default_factory=list)
     risk: RiskAssessment | None = None
     section_scores: list[SectionScore] = field(default_factory=list)
+    data_quality_run_id: str | None = None
