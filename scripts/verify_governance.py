@@ -16,6 +16,15 @@ REQUIRED = [
     "skills/arya-platform-governance/SKILL.md",
 ]
 CR_RE = re.compile(r"CR-\d{8}-\d{3}")
+CR_FILENAME_RE = re.compile(r"CR-\d{8}-\d{3}\.md")
+
+def invalid_change_record_filenames(changes_dir: Path) -> list[str]:
+    """Return Change Record filenames that do not follow the canonical ID format."""
+    return sorted(
+        path.name
+        for path in changes_dir.glob("CR-*.md")
+        if not CR_FILENAME_RE.fullmatch(path.name)
+    )
 
 def main() -> int:
     missing = [p for p in REQUIRED if not (ROOT / p).is_file()]
@@ -25,8 +34,7 @@ def main() -> int:
             print(item)
         return 1
 
-    change_files = sorted((ROOT / "docs/changes").glob("CR-*.md"))
-    bad_names = [p.name for p in change_files if not re.fullmatch(r"CR-\d{8}-\d{3}\.md", p.name)]
+    bad_names = invalid_change_record_filenames(ROOT / "docs/changes")
     if bad_names:
         print("Invalid Change Record filenames:", ", ".join(bad_names))
         return 1
