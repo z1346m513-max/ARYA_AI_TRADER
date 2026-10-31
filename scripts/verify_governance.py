@@ -34,8 +34,7 @@ def main() -> int:
             print(item)
         return 1
 
-    change_files = sorted((ROOT / "docs/changes").glob("CR-*.md"))
-    bad_names = [p.name for p in change_files if not re.fullmatch(r"CR-\d{8}-\d{3}\.md", p.name)]
+    bad_names = invalid_change_record_filenames(ROOT / "docs/changes")
     if bad_names:
         print("Invalid Change Record filenames:", ", ".join(bad_names))
         return 1
