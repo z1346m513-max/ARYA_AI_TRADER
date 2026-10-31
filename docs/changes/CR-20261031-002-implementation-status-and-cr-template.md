@@ -20,13 +20,13 @@ Implement the owner-approved PM-002 documentation changes on a new isolated bran
 
 - `docs/architecture/AGENT_COLLABORATION_AND_EXECUTION.md` — IMPLEMENTED: added section 2.4 and expanded section 7 Change Record template.
 - `docs/changes/CR-20261031-002-implementation-status-and-cr-template.md` — IMPLEMENTED: this Change Record.
-- `docs/governance/CHANGE_LEDGER.md` — PARTIALLY_IMPLEMENTED at record-authoring time; Ledger row is the final remaining write in this bounded task.
+- `docs/governance/CHANGE_LEDGER.md` — IMPLEMENTED: status vocabulary updated and CR-20261031-002 row added; existing CR-20261028-001 row preserved.
 
 ## Files changed
 
 - `docs/architecture/AGENT_COLLABORATION_AND_EXECUTION.md`
 - `docs/changes/CR-20261031-002-implementation-status-and-cr-template.md`
-- `docs/governance/CHANGE_LEDGER.md` (planned for the final sequential write)
+- `docs/governance/CHANGE_LEDGER.md`
 
 ## Files deliberately not changed
 
@@ -71,7 +71,7 @@ Implement the owner-approved PM-002 documentation changes on a new isolated bran
 - Exact automated test command: NOT RUN (documentation-only change; no runtime code changed).
 - Automated test result: NOT RUN.
 - Manual source/baseline review: completed for the source architecture document, CR-001, and main Ledger.
-- Final structural validation of all three branch files: pending final read-back after Ledger update.
+- Final structural validation: completed by reading back all three files from the feature branch and comparing the branch against `main`; only the three intended documentation paths differ.
 
 ## Connectivity status
 
@@ -113,8 +113,8 @@ Implement the owner-approved PM-002 documentation changes on a new isolated bran
 
 ## Reviewer and review date
 
-- Reviewer: ChatGPT PM — pending final read-back.
-- Review date: 2026-10-31 (final read-back pending).
+- Reviewer: ChatGPT PM.
+- Review date: 2026-10-31.
 
 ## Owner decision and decision date
 
