@@ -1,15 +1,11 @@
-"""Real ClientTypeAll driver — natural/legal flow from old.tsetmc.com.
+"""ClientTypeAll driver — TSETMC participant counts and share volumes only.
 
-Format reference (secondary): 5j9/tsetmc market_watch.client_type_all
-Columns: ins_code, n_buy_count, l_buy_count, n_buy_volume, l_buy_volume,
-         n_sell_count, l_sell_count, n_sell_volume, l_sell_volume
-Row separator: ;
-
-Limits: volume/count only (no Rial value); no shareholder count; may timeout outside Iran.
+The endpoint does not provide Rial values or a shareholder-count time series.
 """
 from __future__ import annotations
 
 import json
+import math
 import time
 from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
@@ -72,8 +68,7 @@ class ClientTypeAllProvider(ShareholderDataProvider):
 
     def _resolve_ins_code(self, ticker: str) -> str:
         path = self._search_path.format(query=quote(ticker))
-        url = f"{self.cdn_base}{path}"
-        raw = self._fetch_bytes(url)
+        raw = self._fetch_bytes(f"{self.cdn_base}{path}")
         try:
             payload = json.loads(raw.decode("utf-8-sig"))
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -81,53 +76,51 @@ class ClientTypeAllProvider(ShareholderDataProvider):
         rows = payload.get("instrumentSearch") or []
         if isinstance(rows, dict):
             rows = rows.get("items") or rows.get("data") or []
-        for row in rows:
-            if not isinstance(row, dict):
-                continue
-            sym = str(row.get("lVal18AFC") or row.get("lVal18") or "").strip()
-            if sym == ticker and row.get("insCode"):
-                return str(row["insCode"])
-        if rows and isinstance(rows[0], dict) and rows[0].get("insCode"):
-            return str(rows[0]["insCode"])
-        raise ClientTypeAllProviderError(f"ticker not found: {ticker}")
+        if not isinstance(rows, list):
+            raise ClientTypeAllProviderError("instrument search rows invalid")
+        matches = {
+            str(row.get("insCode")).strip()
+            for row in rows
+            if isinstance(row, dict)
+            and str(row.get("lVal18AFC") or row.get("lVal18") or "").strip() == ticker
+            and str(row.get("insCode") or "").strip()
+        }
+        if len(matches) == 1:
+            return next(iter(matches))
+        if not matches:
+            raise ClientTypeAllProviderError(f"exact ticker match not found: {ticker}")
+        raise ClientTypeAllProviderError(f"ambiguous exact ticker match: {ticker}")
 
     @staticmethod
     def parse_client_type_all(text: str) -> dict[str, dict[str, float]]:
         result: dict[str, dict[str, float]] = {}
-        chunks = text.replace("\r", "").replace("\n", "").split(";")
+        chunks = text.replace("\\r", "").replace("\\n", "").split(";")
+        keys = (
+            "n_buy_count", "l_buy_count", "n_buy_volume", "l_buy_volume",
+            "n_sell_count", "l_sell_count", "n_sell_volume", "l_sell_volume",
+        )
         for chunk in chunks:
             chunk = chunk.strip()
             if not chunk:
                 continue
             parts = chunk.split(",")
-            if len(parts) < 9:
+            if len(parts) != 9:
                 continue
             ins = parts[0].strip()
-            if not ins or not ins.isdigit():
+            if not ins.isdigit() or ins in result:
                 continue
             try:
-                nums = [float(x) if x not in ("", None) else 0.0 for x in parts[1:9]]
-            except ValueError:
+                nums = [float(value) for value in parts[1:]]
+            except (TypeError, ValueError):
                 continue
-            result[ins] = {
-                "n_buy_count": nums[0],
-                "l_buy_count": nums[1],
-                "n_buy_volume": nums[2],
-                "l_buy_volume": nums[3],
-                "n_sell_count": nums[4],
-                "l_sell_count": nums[5],
-                "n_sell_volume": nums[6],
-                "l_sell_volume": nums[7],
-            }
+            if any(not math.isfinite(value) or value < 0 for value in nums):
+                continue
+            result[ins] = dict(zip(keys, nums))
         return result
 
     def _load_all_rows(self) -> dict[str, dict[str, float]]:
         now = time.time()
-        if (
-            self._cache_rows is not None
-            and self._cache_at is not None
-            and (now - self._cache_at) < self._cache_ttl
-        ):
+        if self._cache_rows is not None and self._cache_at is not None and now - self._cache_at < self._cache_ttl:
             return self._cache_rows
         raw = self._fetch_bytes(self.data_url)
         try:
@@ -137,12 +130,10 @@ class ClientTypeAllProvider(ShareholderDataProvider):
         rows = self.parse_client_type_all(text)
         if not rows:
             raise ClientTypeAllProviderError("no rows parsed from ClientTypeAll")
-        self._cache_rows = rows
-        self._cache_at = now
+        self._cache_rows, self._cache_at = rows, now
         return rows
 
     def fetch_shareholder_flow(self, ticker: str, days: int = 5) -> ShareholderFlowMetrics:
-        del days
         ticker = (ticker or "").strip()
         if not ticker:
             return ShareholderFlowMetrics(ticker="", data_quality="missing", source=self.name)
@@ -150,42 +141,32 @@ class ClientTypeAllProvider(ShareholderDataProvider):
             ins_code = self._resolve_ins_code(ticker)
             rows = self._load_all_rows()
         except ClientTypeAllProviderError as exc:
-            return ShareholderFlowMetrics(
-                ticker=ticker,
-                data_quality="missing",
-                source=self.name,
-                notes=(str(exc),),
-            )
+            return ShareholderFlowMetrics(ticker=ticker, data_quality="missing", source=self.name, notes=(str(exc),))
         row = rows.get(ins_code)
-        if not row:
+        if row is None:
             return ShareholderFlowMetrics(
-                ticker=ticker,
-                data_quality="missing",
-                source=self.name,
+                ticker=ticker, data_quality="missing", source=self.name,
                 notes=(f"insCode={ins_code} not in ClientTypeAll",),
             )
-        n_buy_vol = row["n_buy_volume"]
-        l_buy_vol = row["l_buy_volume"]
-        n_sell_vol = row["n_sell_volume"]
-        l_sell_vol = row["l_sell_volume"]
-        n_buy_cnt = row["n_buy_count"]
-        n_sell_cnt = row["n_sell_count"]
-        total_buy = n_buy_vol + l_buy_vol
-        legal_buy_share = (l_buy_vol / total_buy) if total_buy > 0 else None
-        legal_net_volume = l_buy_vol - l_sell_vol
-        ind_avg_buy = (n_buy_vol / n_buy_cnt) if n_buy_cnt > 0 else None
-        ind_avg_sell = (n_sell_vol / n_sell_cnt) if n_sell_cnt > 0 else None
+
+        n_buy_vol, l_buy_vol = row["n_buy_volume"], row["l_buy_volume"]
+        n_sell_vol, l_sell_vol = row["n_sell_volume"], row["l_sell_volume"]
+        n_buy_count, n_sell_count = row["n_buy_count"], row["n_sell_count"]
+        total_buy_volume = n_buy_vol + l_buy_vol
         return ShareholderFlowMetrics(
             ticker=ticker,
-            individual_avg_buy_value=ind_avg_buy,
-            individual_avg_sell_value=ind_avg_sell,
-            legal_buy_share=legal_buy_share,
-            legal_net_buy_value=legal_net_volume,
+            individual_avg_buy_volume=n_buy_vol / n_buy_count if n_buy_count > 0 else None,
+            individual_avg_sell_volume=n_sell_vol / n_sell_count if n_sell_count > 0 else None,
+            legal_buy_volume=l_buy_vol,
+            legal_sell_volume=l_sell_vol,
+            legal_net_buy_volume=l_buy_vol - l_sell_vol,
+            legal_buy_volume_share=l_buy_vol / total_buy_volume if total_buy_volume > 0 else None,
             data_quality="partial",
             source=f"{self.name}:{self.data_url}",
+            source_timestamp_utc=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             notes=(
                 f"insCode={ins_code}",
-                "volume-based not Rial; no shareholder count in ClientTypeAll",
-                datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "ClientTypeAll reports share volumes and participant counts, not Rial values",
+                f"requested_days={days}; endpoint is a single snapshot and has no historical window",
             ),
         )
