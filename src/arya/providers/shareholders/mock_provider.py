@@ -1,4 +1,4 @@
-"""درایور mock سهامداران — fixture دترمینیستیک برای تست آفلاین."""
+"""Deterministic offline shareholder fixtures."""
 from __future__ import annotations
 
 from arya.models.shareholders import ShareholderCountPoint, ShareholderFlowMetrics
@@ -12,42 +12,21 @@ class MockShareholderProvider(ShareholderDataProvider):
     def fetch_shareholder_flow(self, ticker: str, days: int = 5) -> ShareholderFlowMetrics:
         key = (ticker or "").strip()
         if key.upper() in {"ACCUM", "FOOLAD", "فولاد"} or key.endswith("_ACC"):
-            series = tuple(
-                ShareholderCountPoint(f"2026-10-{17 + i:02d}", 120_000 - i * 800)
-                for i in range(min(days, 5))
-            )
+            series = tuple(ShareholderCountPoint(f"2026-10-{17 + i:02d}", 120_000 - i * 800) for i in range(min(days, 5)))
             return ShareholderFlowMetrics(
-                ticker=key,
-                shareholder_count_series=series,
-                shareholder_count_change_pct=-4.2,
-                individual_avg_buy_value=2.1e8,
-                individual_avg_sell_value=1.0e8,
-                legal_buy_share=0.38,
-                legal_net_buy_value=5.0e9,
-                data_quality="usable",
-                source="mock:accumulation",
-                notes=("fixture accumulation",),
+                ticker=key, shareholder_count_series=series, shareholder_count_change_pct=-4.2,
+                individual_avg_buy_volume=2.1e5, individual_avg_sell_volume=1.0e5,
+                legal_buy_volume=5.0e6, legal_sell_volume=1.0e6, legal_net_buy_volume=4.0e6,
+                legal_buy_volume_share=0.38, data_quality="usable", source="mock:accumulation",
+                notes=("fixture share volumes; no Rial values",),
             )
         if key.upper() in {"DIST", "DISTRIB"} or key.endswith("_DIST"):
-            series = tuple(
-                ShareholderCountPoint(f"2026-10-{17 + i:02d}", 100_000 + i * 900)
-                for i in range(min(days, 5))
-            )
+            series = tuple(ShareholderCountPoint(f"2026-10-{17 + i:02d}", 100_000 + i * 900) for i in range(min(days, 5)))
             return ShareholderFlowMetrics(
-                ticker=key,
-                shareholder_count_series=series,
-                shareholder_count_change_pct=5.1,
-                individual_avg_buy_value=0.8e8,
-                individual_avg_sell_value=1.9e8,
-                legal_buy_share=0.12,
-                legal_net_buy_value=-2.0e9,
-                data_quality="usable",
-                source="mock:distribution",
-                notes=("fixture distribution",),
+                ticker=key, shareholder_count_series=series, shareholder_count_change_pct=5.1,
+                individual_avg_buy_volume=0.8e5, individual_avg_sell_volume=1.9e5,
+                legal_buy_volume=1.0e6, legal_sell_volume=3.0e6, legal_net_buy_volume=-2.0e6,
+                legal_buy_volume_share=0.12, data_quality="usable", source="mock:distribution",
+                notes=("fixture share volumes; no Rial values",),
             )
-        return ShareholderFlowMetrics(
-            ticker=key or "UNKNOWN",
-            data_quality="missing",
-            source="mock:empty",
-            notes=("no shareholder data in mock",),
-        )
+        return ShareholderFlowMetrics(ticker=key or "UNKNOWN", data_quality="missing", source="mock:empty", notes=("no shareholder data in mock",))
