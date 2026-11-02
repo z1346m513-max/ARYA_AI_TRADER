@@ -73,10 +73,10 @@ class ShareChangeAnalyzer:
             })
 
         score = sum(signals) / len(signals)
-        # Partial snapshots may contribute only when a signal's full input set exists.
-        # Confidence is capped to make incompleteness explicit.
-        q = 1.0 if metrics.data_quality == "usable" else 0.25
-        confidence = min(1.0, (len(signals) / 3.0) * q)
+        # A complete individual signal from a partial snapshot is usable,
+        # but the entire section remains low-confidence until evidence is complete.
+        # Keep the partial-data confidence ceiling independent of signal count.
+        confidence = 0.25 if metrics.data_quality != "usable" else min(1.0, len(signals) / 3.0)
         return SectionScore(self.section_name, round(score, 4), round(confidence, 4), {
             "reasons": reasons, "data_quality": metrics.data_quality,
             "metrics": metrics.as_dict(), "signal_count": len(signals),
