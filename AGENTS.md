@@ -1,32 +1,13 @@
-# دستور شروع کار همهٔ اعضا و ایجنت‌ها — ARYA AI Trader
+<!-- LOVABLE:BEGIN -->
+> [!IMPORTANT]
+> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
+> published git history — force pushing, or rebasing/amending/squashing commits
+> that are already pushed — as it rewrites history on Lovable's side and the
+> user will likely lose their project history.
+>
+> Commits you push to the connected branch sync back to Lovable and show up in
+> the editor, so keep the branch in a working state.
+<!-- LOVABLE:END -->
 
-این فایل نقطهٔ شروع اجباری هر انسان، ایجنت یا ابزار هوش مصنوعی است که روی مخزن کار می‌کند.
-
-## قبل از هر تغییر
-1. `docs/governance/PLATFORM_CONSTITUTION.md` را کامل بخوان.
-2. `docs/governance/STARTUP_CHECKLIST.md` را اجرا/بررسی کن.
-3. منشور تفکیک دو گروه را در `docs/governance/DUAL_TEAM_GOVERNANCE.md` بخوان و مرز اختیارات/پروتکل تعارض را رعایت کن.
-4. وضعیت جاری و آخرین تغییرات ثبت‌شده را در `docs/governance/CHANGE_LEDGER.md` و `docs/changes/` بخوان.
-5. منابع معتبر و وضعیت اعتبار آن‌ها را در `docs/sources/` بررسی کن.
-6. ADRهای مرتبط در `docs/decisions/` را بخوان.
-7. اگر شواهد کافی برای یک ادعا، API، قرارداد داده، الگوریتم یا رفتار نرم‌افزاری وجود ندارد، کدنویسی را متوقف کن و موضوع را به‌صورت «نیازمند شواهد» ثبت کن.
-
-## قواعد غیرقابل مذاکره
-- اطلاعات ساختگی، حدس، hallucination یا ادعای تأییدنشده مبنای کد قرار نمی‌گیرد.
-- خروجی مدل هوش مصنوعی به‌تنهایی «مدرک» محسوب نمی‌شود.
-- هر تغییر باید دلیل، دامنه، منبع/مدرک، ریسک، آزمون و نتیجهٔ اعتبارسنجی داشته باشد.
-- تغییر بدون Change Record معتبر مجاز نیست.
-- تغییرات فقط از طریق branch + Pull Request انجام شوند؛ `main` مرجع پایدار است.
-- هیچ ایجنتی حق ندارد تصمیم محصول/معماری را به‌جای مالک پروژه قطعی کند.
-- هر فایل تولیدی که قرار است بخشی از دانش مرجع پروژه باشد باید پس از تولید طبق سیاست همگام‌سازی Drive ثبت و نسخه‌بندی شود؛ در صورت نبود اتصال Drive، نباید وانمود شود که فایل در Drive ذخیره شده است.
-- اطلاعات محرمانه، token، credential، cookie و فایل‌های حاوی secrets هرگز commit نمی‌شوند.
-
-## فرمان توقف
-اگر منبع معتبر، قرارداد داده، نتیجهٔ تست یا مالکیت/مجوز لازم روشن نیست، کار را متوقف کن و:
-1. مسئله را در Change Record ثبت کن؛
-2. شواهد موردنیاز را مشخص کن؛
-3. از پیاده‌سازی بر اساس حدس خودداری کن.
-
-## مرجع تصمیم
-مالک پروژه و مخزن: `ziya1346`.
-تصمیم نهایی محصول، معماری و پذیرش تغییرات با مالک پروژه است.
+- Keep market adapters fetch-based and validate incoming candles before analysis; invalid or missing real data must degrade to UNAVAILABLE, never to mock data.
+- Symbol-mode AI analysis consumes the same real OHLCV adapters as charts and includes source and last-bar time, so generated summaries cannot silently analyze demo data.

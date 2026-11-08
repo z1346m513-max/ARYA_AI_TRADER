@@ -1,58 +1,29 @@
-# ARYA AI Trader
+# Welcome to your Lovable project
 
-پلتفرم تحلیل چندبازاره (بورس ایران، ارز دیجیتال، فارکس) با معماری Enterprise،
-موتور امتیازدهی وزن‌دار، موتور تصمیم‌گیری هوش مصنوعی و مدیریت ریسک.
+This project was built with [Lovable](https://lovable.dev).
 
-> وضعیت فعلی: Milestone 1 — Core Pipeline + TSETMC foundation
+## Build with Lovable
 
-## حاکمیت اجباری پروژه
+Open your project in the [Lovable editor](https://lovable.dev) and keep building.
 
-قبل از هر کار، همه اعضای تیم و ایجنت‌ها باید AGENTS.md و قانون اساسی پلتفرم را بخوانند.
-توسعه بر مبنای اطلاعات غیرمعتبر ممنوع است و هر تغییر باید Change Record، دلیل، شواهد و نتیجه اعتبارسنجی داشته باشد.
+- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
+- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
 
-- AGENTS.md
-- docs/governance/PLATFORM_CONSTITUTION.md
-- docs/governance/STARTUP_CHECKLIST.md
-- docs/governance/CHANGE_LEDGER.md
-- docs/governance/OWNER_AND_IP_POLICY.md
-- skills/arya-platform-governance/SKILL.md
-- docs/sources/DRIVE_SOURCE_REGISTRY.md
+## Development
 
-اصل مهم: اگر شواهد کافی وجود ندارد، ایجنت باید STOP کند و از حدس‌زدن خودداری کند.
+Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
-## محدوده پروژه
+```sh
+git clone <this-repository-url>
+cd <repository-name>
+npm i
+npm run dev
+```
 
-این پروژه فقط برای ارز دیجیتال، بورس ایران، فارکس و سهام خارجی است. قابلیت‌ها و مستندات مالیاتی عمداً خارج از محدوده‌اند.
+## Built with
 
-## معماری کلی
-
-Providers → Storage → Indicator Engine → Analysis Engine → Scoring Engine → AI Decision Engine → Risk Manager → Recommendation Engine → Dashboard
-
-جزئیات قراردادها در docs/architecture/README.md آمده است.
-
-## نصب
-
-python -m venv .venv
-pip install -r requirements.txt
-pip install -e .
-
-## اجرای تست‌ها
-
-pip install -e ".[dev]"
-pytest tests/ -v
-
-## تنظیمات
-
-رفتار سیستم از طریق فایل‌های YAML در configs/ کنترل می‌شود؛ از جمله indicators.yaml، providers.yaml، weights.yaml و filters.yaml.
-
-## نقشه راه
-
-به docs/roadmap/README.md مراجعه کنید.
-
-## داده آنلاین بورس ایران
-
-درایور پیش‌فرض بازار stock، tsetmc است و برای تست آفلاین mock استفاده می‌شود. راهنمای عملیات داده زنده و Drive در docs/operations/live-data-and-drive-sync.md قرار دارد.
-
-## لایسنس و مالکیت
-
-به LICENSE و docs/governance/OWNER_AND_IP_POLICY.md مراجعه کنید. سیاست پروژه، حفظ حقوق و اختیار پروژه برای مالک مخزن ziya1346 است؛ واگذاری حقوق مشارکت‌کنندگان باید در قرارداد کتبی مناسب تثبیت شود.
+- TanStack Start
+- TypeScript
+- React
+- Tailwind CSS
