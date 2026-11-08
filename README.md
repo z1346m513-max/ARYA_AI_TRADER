@@ -41,6 +41,20 @@ pip install -e .
 pip install -e ".[dev]"
 pytest tests/ -v
 
+## ورود دستی Excel/CSV با تفکیک سه بازار
+
+نسخه اول دریافت آفلاین فایل روزانه، کنترل کیفیت، ثبت منشأ و گزارش توصیفی برای
+`iran_equity`، `crypto` و `forex` اضافه شده است. این مسیر به شبکه و کارگزار وصل
+نمی‌شود و سیگنال یا تأیید معامله تولید نمی‌کند.
+
+```bash
+pip install -e ".[excel]"
+python -m arya.data_ingestion --help
+```
+
+راهنمای فرمت Excel، پوشه مشترک و اجرای هر بازار در
+[راهنمای ورود روزانه داده](docs/operations/daily-market-ingestion.md) آمده است.
+
 ## تنظیمات
 
 رفتار سیستم از طریق فایل‌های YAML در configs/ کنترل می‌شود؛ از جمله indicators.yaml، providers.yaml، weights.yaml و filters.yaml.

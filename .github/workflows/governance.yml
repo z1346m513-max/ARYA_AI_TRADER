@@ -17,7 +17,7 @@ jobs:
       - name: Verify mandatory governance files and PR evidence
         run: python scripts/verify_governance.py
       - name: Install project
-        run: python -m pip install --upgrade pip && pip install -e ".[dev]"
+        run: python -m pip install --upgrade pip && pip install -e ".[dev,excel]"
       - name: Compile Python
         run: python -m compileall -q src tests scripts
       - name: Run tests

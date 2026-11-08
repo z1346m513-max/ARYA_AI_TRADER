@@ -2,6 +2,8 @@ __pycache__/
 *.pyc
 .venv/
 .pytest_cache/
+.coverage
+htmlcov/
 *.egg-info/
 data/cache/*
 data/database/*
@@ -10,3 +12,8 @@ data/reports/*
 data/exports/*
 !data/**/.gitkeep
 .DS_Store
+.env
+.env.*
+!.env.example
+data/market_pipeline/
+data/inbox/
