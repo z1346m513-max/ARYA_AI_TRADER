@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+import math
 import time
 from datetime import datetime, timezone
 from urllib.error import HTTPError, URLError
@@ -117,7 +118,9 @@ class TsetmcMarketProvider(MarketDataProvider):
                     "previous_close": self._number(row, "priceYesterday", "py"),
                     "volume": self._number(row, "qTotTran5J", "zTotTran"),
                     "value": self._number(row, "qTotCap", "qTotCap"),
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    # Retrieval time is not evidence of a source quote timestamp.
+                    "source_timestamp": None,
+                    "retrieved_at_utc": datetime.now(timezone.utc).isoformat(),
                 }
             )
         if ticker and not quotes:
@@ -126,13 +129,14 @@ class TsetmcMarketProvider(MarketDataProvider):
 
     def _resolve_instrument(self, ticker: str) -> tuple[str, str | None]:
         rows = self._unwrap(self._get_json(f"/api/Instrument/GetInstrumentSearch/{quote(ticker)}"), "instrumentSearch")
+        matches = {}
         for row in rows:
             symbol = str(row.get("lVal18AFC") or row.get("lVal18") or "").strip()
-            if symbol == ticker:
-                return str(row["insCode"]), row.get("lVal30")
-        if rows and rows[0].get("insCode"):
-            return str(rows[0]["insCode"]), rows[0].get("lVal30")
-        raise TsetmcProviderError(f"نماد در TSETMC پیدا نشد: {ticker}")
+            if symbol == ticker and row.get("insCode"):
+                matches[str(row["insCode"])] = row.get("lVal30")
+        if len(matches) != 1:
+            raise TsetmcProviderError(f"تطبیق دقیق و یکتای نماد در TSETMC ممکن نیست: {ticker}")
+        return next(iter(matches.items()))
 
     @staticmethod
     def _number(row: dict, *keys: str, default: float = 0.0) -> float:
@@ -149,10 +153,30 @@ class TsetmcMarketProvider(MarketDataProvider):
     def _timestamp(row: dict) -> datetime:
         raw = str(row.get("dEven") or row.get("date") or "")
         if len(raw) == 8 and raw.isdigit():
-            return datetime.strptime(raw, "%Y%m%d").replace(tzinfo=timezone.utc)
-        return datetime.now(timezone.utc)
+            try:
+                # Existing daily-label convention; not an intraday execution time.
+                return datetime.strptime(raw, "%Y%m%d").replace(tzinfo=timezone.utc)
+            except ValueError as exc:
+                raise TsetmcProviderError("تاریخ منبع TSETMC نامعتبر است") from exc
+        raise TsetmcProviderError("تاریخ منبع TSETMC وجود ندارد یا نامعتبر است")
+
+    @staticmethod
+    def _required_number(row: dict, *keys: str) -> float:
+        for key in keys:
+            value = row.get(key)
+            if value not in (None, ""):
+                try:
+                    number = float(value)
+                except (TypeError, ValueError, OverflowError) as exc:
+                    raise TsetmcProviderError(f"فیلد عددی نامعتبر TSETMC: {key}") from exc
+                if isinstance(value, bool) or not math.isfinite(number):
+                    raise TsetmcProviderError(f"فیلد عددی نامعتبر TSETMC: {key}")
+                return number
+        raise TsetmcProviderError(f"فیلد ضروری TSETMC موجود نیست: {keys[0]}")
 
     def fetch_ohlcv(self, symbol: Symbol, timeframe: str, limit: int = 200) -> OHLCVSeries:
+        if symbol.market != "stock":
+            raise ValueError("TSETMC فقط نمادهای market='stock' را می‌پذیرد")
         if timeframe not in {"1d", "1D", "daily"}:
             raise ValueError("TSETMC provider فعلاً فقط timeframe روزانه را پشتیبانی می‌کند")
         if limit <= 0:
@@ -164,14 +188,15 @@ class TsetmcMarketProvider(MarketDataProvider):
         )
         candles: list[Candle] = []
         for row in rows[-limit:]:
-            close = self._number(row, "pClosing", "pc", "pDrCotVal")
-            previous = self._number(row, "priceYesterday", "py", default=close)
-            open_ = self._number(row, "priceFirst", "pf", default=previous)
-            high = self._number(row, "priceMax", "pmax", default=max(open_, close))
-            low = self._number(row, "priceMin", "pmin", default=min(open_, close))
-            if close <= 0 or low < 0 or high < low:
-                continue
-            candles.append(Candle(self._timestamp(row), open_, high, low, close, self._number(row, "qTotTran5J", "zTotTran")))
+            timestamp = self._timestamp(row)
+            close = self._required_number(row, "pClosing", "pc", "pDrCotVal")
+            open_ = self._required_number(row, "priceFirst", "pf")
+            high = self._required_number(row, "priceMax", "pmax")
+            low = self._required_number(row, "priceMin", "pmin")
+            volume = self._required_number(row, "qTotTran5J", "zTotTran")
+            if min(open_, high, low, close) <= 0 or volume < 0 or high < max(open_, close, low) or low > min(open_, close, high):
+                raise TsetmcProviderError("کندل OHLCV نامعتبر در پاسخ TSETMC")
+            candles.append(Candle(timestamp, open_, high, low, close, volume))
         if not candles:
             raise TsetmcProviderError(f"برای نماد {symbol.ticker} دادهٔ روزانه‌ای دریافت نشد")
         candles.sort(key=lambda candle: candle.timestamp)

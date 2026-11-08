@@ -15,11 +15,14 @@ from rich.console import Console
 from arya.app.bootstrap import AryaApp
 from arya.dashboard.console_dashboard import render_recommendation
 from arya.data_quality import OHLCVQualityError
+from arya.data_ingestion.cli import add_arguments, run as run_ingestion
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="arya", description="ARYA AI Trader CLI")
     sub = parser.add_subparsers(dest="command", required=True)
+    ingest_p = sub.add_parser("ingest-market-file", help="ورود آفلاین Excel/CSV یا بررسی پوشه محلی")
+    add_arguments(ingest_p)
 
     analyze_p = sub.add_parser("analyze", help="تحلیل یک نماد و نمایش پیشنهاد")
     analyze_p.add_argument("--ticker", required=True, help="نماد، مثلا FOOLAD یا BTCUSDT")
@@ -38,6 +41,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.command == "ingest-market-file":
+        return run_ingestion(args)
     console = Console()
 
     app = AryaApp()
