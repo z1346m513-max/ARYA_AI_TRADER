@@ -31,6 +31,5 @@
 | ID | Date | Change | Status | Evidence | Validation | Owner Decision |
 |---|---|---|---|---|---|---|
 | CR-20261102-002 | 2026-11-02 | اصلاح معنای واحدها، تطبیق دقیق نماد و کیفیت شواهد سهامداران برای Smart Money | IMPLEMENTED | `docs/changes/CR-20261102-002.md`; PR #60 محدودشده بر پایه main | مالک پروژه: Python 3.11.15؛ 14 تست هدفمند و 49 تست کامل روی شاخه‌ی مستقل موفق؛ Governance CI پس از اصلاح نام‌گذاری نیازمند اجرای مجدد است | ادغام فقط پس از بازبینی مستقل، CI سبز و تأیید صریح مالک |
-
-
 | CR-20261103-001 | 2026-11-03 | پیشنهاد منشور حاکمیت دو گروه بازار داخلی و خارجی و الزام مطالعه آن در AGENTS.md | PROPOSED | `docs/governance/DUAL_TEAM_GOVERNANCE.md`; `docs/changes/CR-20261103-001.md`; درخواست مالک | بازبینی محتوایی انجام شد؛ تست خودکار/CI در انتظار PR؛ هیچ کد اجرایی تغییر نکرده است | در انتظار review و تأیید صریح مالک؛ تا آن زمان منشور لازم‌الاجرا نیست |
+| CR-20261113-001 | 2026-11-13 | افزودن adapter اختیاری پژوهش چندایجنتی TradingAgents برای سهام بین‌المللی و کریپتو، همراه runner و آزمون‌های آفلاین | PARTIALLY_IMPLEMENTED | `docs/changes/CR-20261113-001.md`; `docs/integrations/TRADINGAGENTS.md`; upstream v0.7.1 release/API | کد و تست authored؛ اجرای محلی NOT RUN؛ CI پس از PR لازم است؛ live provider تست نشده | در انتظار review، CI سبز و پذیرش صریح مالک |
