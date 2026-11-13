@@ -1,0 +1,4 @@
+# Optional integration; requires Python 3.11 or newer.
+# Upstream release TauricResearch/TradingAgents v0.7.1; Apache-2.0.
+# The direct wheel URL is pinned and verified by SHA-256.
+tradingagents @ https://github.com/TauricResearch/TradingAgents/releases/download/v0.7.1/tradingagents-0.7.1-py3-none-any.whl#sha256=db5cc7459c44acce3549ba1cc9e4d8c6a32253bb42e17222eeb13042daa4a382
