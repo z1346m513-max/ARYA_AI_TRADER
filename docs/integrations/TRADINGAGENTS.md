@@ -30,12 +30,15 @@ TradingAgents از Providerهای خودش استفاده می‌کند؛ در �
 
 ## نصب افزونه
 
-این افزونه به Python 3.11 یا بالاتر نیاز دارد. بسته upstream به‌صورت dependency پیش‌فرض ARYA نصب نمی‌شود.
+این افزونه به Python 3.11 یا بالاتر نیاز دارد. بسته upstream به‌صورت dependency پیش‌فرض ARYA نصب نمی‌شود. از آن‌جا که نسخه upstream به pandas 3 نیاز دارد و ARYA نسخه‌های قدیمی‌تر را نیز می‌پذیرد، برای جلوگیری از ارتقای ناخواسته dependencyهای محیط اصلی ARYA، نصب را در virtualenv جدا انجام دهید.
 
-در PowerShell، از ریشه پروژه:
+در PowerShell و از ریشه پروژه:
 
 ~~~powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements-tradingagents.txt
+py -3.11 -m venv .venv-ta
+.\.venv-ta\Scripts\python.exe -m pip install --upgrade pip
+.\.venv-ta\Scripts\python.exe -m pip install -e .
+.\.venv-ta\Scripts\python.exe -m pip install -r requirements-tradingagents.txt
 ~~~
 
 فایل requirements، wheel انتشار رسمی TauricResearch/TradingAgents v0.7.1 را pin می‌کند. اطلاعات انتشار رسمی، مجوز Apache-2.0 و digest ثبت‌شده برای wheel:
@@ -63,13 +66,13 @@ $env:TRADINGAGENTS_LLM_PROVIDER = "openai"
 نمونه سهام خارجی:
 
 ~~~powershell
-.\.venv\Scripts\python.exe scripts\run_tradingagents_research.py --ticker AAPL --date 2026-11-13 --asset-class international_stock --provider openai --language Persian
+.\.venv-ta\Scripts\python.exe scripts\run_tradingagents_research.py --ticker AAPL --date 2026-11-13 --asset-class international_stock --provider openai --language Persian
 ~~~
 
 نمونه رمزارز:
 
 ~~~powershell
-.\.venv\Scripts\python.exe scripts\run_tradingagents_research.py --ticker BTC-USD --date 2026-11-13 --asset-class crypto --provider openai
+.\.venv-ta\Scripts\python.exe scripts\run_tradingagents_research.py --ticker BTC-USD --date 2026-11-13 --asset-class crypto --provider openai
 ~~~
 
 برای اجرای --help، نصب بسته upstream الزامی نیست؛ اما اجرای واقعی به نصب افزونه و تنظیم یک provider معتبر نیاز دارد.
@@ -98,13 +101,13 @@ $env:TRADINGAGENTS_LLM_PROVIDER = "openai"
 
 آزمون‌های tests/ai/test_tradingagents_adapter.py با stubهای محلی اجرا می‌شوند و به API، حساب LLM یا اینترنت نیاز ندارند. آن‌ها مسیر نصب‌نبودن dependency، رد کردن بازار نامعتبر، ساخت config ایزوله، rating REVIEW، انتقال پرتفوی و اعتبارسنجی تاریخ را بررسی می‌کنند.
 
-پس از checkout شاخه، از ریشه پروژه اجرا کنید:
+پس از checkout شاخه، از ریشه پروژه و در همان virtualenv جدا اجرا کنید:
 
 ~~~powershell
-.\.venv\Scripts\python.exe -m pytest tests\ai\test_tradingagents_adapter.py -q
-.\.venv\Scripts\python.exe scripts\verify_governance.py
-.\.venv\Scripts\python.exe -m compileall -q src tests scripts
-.\.venv\Scripts\python.exe -m pytest -q
+.\.venv-ta\Scripts\python.exe -m pytest tests\ai\test_tradingagents_adapter.py -q
+.\.venv-ta\Scripts\python.exe scripts\verify_governance.py
+.\.venv-ta\Scripts\python.exe -m compileall -q src tests scripts
+.\.venv-ta\Scripts\python.exe -m pytest -q
 ~~~
 
 آزمون واقعی متصل به provider عمداً در CI/آزمون واحد اجرا نمی‌شود؛ اجرای live فقط با تصمیم و کلیدهای محلی کاربر انجام شود.
