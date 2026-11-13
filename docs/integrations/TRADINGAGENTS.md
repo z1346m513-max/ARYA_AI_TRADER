@@ -1,12 +1,12 @@
 # اتصال اختیاری TradingAgents به ARYA
 
-**وضعیت:** PARTIALLY_IMPLEMENTED — کد و آزمون‌های واحد آفلاین افزوده شده‌اند؛ تأیید CI، اجرای محلی و پذیرش مالک هنوز لازم است.  
+**وضعیت:** PARTIALLY_IMPLEMENTED — کد و آزمون‌های آفلاین افزوده شده‌اند و CI موفق است؛ اجرای متصل به سرویس واقعی و پذیرش مالک باقی مانده است.  
 **نسخه upstream:** v0.7.1  
 **تاریخ بررسی منبع:** 2026-11-13
 
 ## هدف و مرز معماری
 
-TradingAgents به‌عنوان یک موتور پژوهش چندایجنتی جداگانه به ARYA متصل شده است. تحلیلگرهای بنیادی، تکنیکال/بازار، اخبار و احساسات آن می‌توانند گزارش تولید کنند؛ گروه پژوهشگر صعودی/نزولی و مدیران ریسک/پرتفوی در همان چارچوب upstream کار می‌کنند.
+TradingAgents به‌عنوان یک موتور پژوهش چندایجنتی جداگانه به ARYA متصل شده است. تحلیلگرهای بنیادی، تکنیکال/بازار، اخبار و احساسات آن می‌توانند گزارش تولید کنند؛ گروه پژوهشگر صعودی/نزولی و مدیران ریسک/پرتفوی در چارچوب upstream کار می‌کنند.
 
 این اتصال عمداً جایگزین هسته ARYA نیست:
 - خروجی TradingAgents فقط یک rating دسته‌ای پنج‌سطحی (Buy، Overweight، Hold، Underweight، Sell) یا REVIEW است.
@@ -99,9 +99,15 @@ $env:TRADINGAGENTS_LLM_PROVIDER = "openai"
 
 ## آزمون
 
-آزمون‌های tests/ai/test_tradingagents_adapter.py با stubهای محلی اجرا می‌شوند و به API، حساب LLM یا اینترنت نیاز ندارند. آن‌ها مسیر نصب‌نبودن dependency، رد کردن بازار نامعتبر، ساخت config ایزوله، rating REVIEW، انتقال پرتفوی و اعتبارسنجی تاریخ را بررسی می‌کنند.
+آزمون‌های tests/ai/test_tradingagents_adapter.py با stubهای محلی اجرا می‌شوند و به API، حساب LLM یا اینترنت نیاز ندارند. GitHub Actions run #35 روی Python 3.12.16 با موفقیت انجام شد:
+- governance verifier: passed
+- نصب پروژه: passed
+- compileall: passed
+- full pytest suite: 58 passed in 0.74s
 
-پس از checkout شاخه، از ریشه پروژه و در همان virtualenv جدا اجرا کنید:
+گزارش CI: https://github.com/z1346m513-max/ARYA_AI_TRADER/actions/runs/43458896625
+
+برای تکرار آزمون در محیط محلی Python 3.11+، پس از checkout شاخه و ایجاد virtualenv جدا:
 
 ~~~powershell
 .\.venv-ta\Scripts\python.exe -m pytest tests\ai\test_tradingagents_adapter.py -q
